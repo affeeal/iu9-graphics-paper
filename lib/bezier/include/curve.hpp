@@ -27,7 +27,7 @@ public:
 class Curve : public ICurve {
 public:
   Curve() = delete;
-  Curve(std::vector<Point> &&points) : points_(std::move(points)) {}
+  explicit Curve(std::vector<Point> &&points);
 
   IRectangleUptr CalculateBoundingRectangle() const override;
   std::pair<ICurveUptr, ICurveUptr> Split(const double t) const override;
@@ -36,6 +36,10 @@ public:
   const std::vector<Point> &GetPoints() const override { return points_; }
 
 private:
+  void SplitDeCasteljau(std::vector<Point> &left_curve_points,
+                        std::vector<Point> &right_curve_points,
+                        const std::vector<Point> &points, const double t) const;
+
   std::vector<Point> points_;
 };
 
