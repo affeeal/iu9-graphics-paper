@@ -61,21 +61,22 @@ void Curve::SplitDeCasteljau(std::vector<Point> &left_curve_points,
                              const std::vector<Point> &points,
                              const double t) const {
   if (points.size() == 1) {
-    left_curve_points.push_back(points.front());
-    right_curve_points.push_back(points.front());
+    left_curve_points.push_back(points[0]);
+    right_curve_points.push_back(points[0]);
     return;
   }
 
-  const std::size_t kNewSize = points.size() - 1;
+  const std::size_t new_size = points.size() - 1;
   std::vector<Point> new_points;
-  new_points.reserve(kNewSize);
-  for (auto i = 0; i < kNewSize; i++) {
+  new_points.reserve(new_size);
+
+  for (auto i = 0; i < new_size; i++) {
     if (i == 0) {
       left_curve_points.push_back(points[i]);
     }
 
-    if (i == kNewSize - 1) {
-      right_curve_points.push_back(points[i]);
+    if (i == new_size - 1) {
+      right_curve_points.push_back(points[i + 1]);
     }
 
     new_points.push_back(points[i] * (1 - t) + points[i + 1] * t);
