@@ -2,7 +2,6 @@
 
 #include <cassert>
 #include <limits>
-#include <type_traits>
 
 #include "point.hpp"
 #include "rectangle.hpp"
@@ -89,7 +88,7 @@ bool Curve::IsIntersect(const ICurve &other, const double threshold) const {
   return AreIntersect(*this, other, threshold);
 }
 
-bool Curve::AreIntersect(const ICurve& first, const ICurve& second,
+bool Curve::AreIntersect(const ICurve &first, const ICurve &second,
                          const double threshold) const {
   const auto first_box = first.CalculateBoundingBox();
   const auto second_box = second.CalculateBoundingBox();
@@ -102,7 +101,7 @@ bool Curve::AreIntersect(const ICurve& first, const ICurve& second,
   }
 
   // One of the possible completion conditions
-  if (first_box->CalculateArea() + second_box->CalculateArea() <  threshold) {
+  if (first_box->CalculateArea() + second_box->CalculateArea() < threshold) {
     return true;
   }
 
@@ -114,10 +113,10 @@ bool Curve::AreIntersect(const ICurve& first, const ICurve& second,
   assert(second_split.first);
   assert(second_split.second);
 
-  return AreIntersect(*first_split.first, *second_split.first, threshold)
-      || AreIntersect(*first_split.first, *second_split.second, threshold)
-      || AreIntersect(*first_split.second, *second_split.first, threshold)
-      || AreIntersect(*first_split.second, *second_split.second, threshold);
+  return AreIntersect(*first_split.first, *second_split.first, threshold) ||
+         AreIntersect(*first_split.first, *second_split.second, threshold) ||
+         AreIntersect(*first_split.second, *second_split.first, threshold) ||
+         AreIntersect(*first_split.second, *second_split.second, threshold);
 }
 
 } // namespace bezier

@@ -40,7 +40,7 @@ private:
                         std::vector<Point> &right_curve_points,
                         const std::vector<Point> &points, const double t) const;
 
-  bool AreIntersect(const ICurve& first, const ICurve& second,
+  bool AreIntersect(const ICurve &first, const ICurve &second,
                     const double threshold) const;
 
   std::vector<Point> points_;
