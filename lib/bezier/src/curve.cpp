@@ -2,7 +2,6 @@
 
 #include <cassert>
 #include <limits>
-#include <type_traits>
 
 #include "point.hpp"
 #include "rectangle.hpp"
@@ -62,21 +61,22 @@ void Curve::SplitDeCasteljau(std::vector<Point> &left_curve_points,
                              const std::vector<Point> &points,
                              const double t) const {
   if (points.size() == 1) {
-    left_curve_points.push_back(points.front());
-    right_curve_points.push_back(points.front());
+    left_curve_points.push_back(points[0]);
+    right_curve_points.push_back(points[0]);
     return;
   }
 
-  const std::size_t kNewSize = points.size() - 1;
+  const std::size_t new_size = points.size() - 1;
   std::vector<Point> new_points;
-  new_points.reserve(kNewSize);
-  for (auto i = 0; i < kNewSize; i++) {
+  new_points.reserve(new_size);
+
+  for (auto i = 0; i < new_size; i++) {
     if (i == 0) {
       left_curve_points.push_back(points[i]);
     }
 
-    if (i == kNewSize - 1) {
-      right_curve_points.push_back(points[i]);
+    if (i == new_size - 1) {
+      right_curve_points.push_back(points[i + 1]);
     }
 
     new_points.push_back(points[i] * (1 - t) + points[i + 1] * t);
@@ -89,7 +89,7 @@ bool Curve::IsIntersect(const ICurve &other, const double threshold) const {
   return AreIntersect(*this, other, threshold);
 }
 
-bool Curve::AreIntersect(const ICurve& first, const ICurve& second,
+bool Curve::AreIntersect(const ICurve &first, const ICurve &second,
                          const double threshold) const {
   const auto first_box = first.CalculateBoundingBox();
   const auto second_box = second.CalculateBoundingBox();
@@ -102,7 +102,7 @@ bool Curve::AreIntersect(const ICurve& first, const ICurve& second,
   }
 
   // One of the possible completion conditions
-  if (first_box->CalculateArea() + second_box->CalculateArea() <  threshold) {
+  if (first_box->CalculateArea() + second_box->CalculateArea() < threshold) {
     return true;
   }
 
@@ -114,10 +114,10 @@ bool Curve::AreIntersect(const ICurve& first, const ICurve& second,
   assert(second_split.first);
   assert(second_split.second);
 
-  return AreIntersect(*first_split.first, *second_split.first, threshold)
-      || AreIntersect(*first_split.first, *second_split.second, threshold)
-      || AreIntersect(*first_split.second, *second_split.first, threshold)
-      || AreIntersect(*first_split.second, *second_split.second, threshold);
+  return AreIntersect(*first_split.first, *second_split.first, threshold) ||
+         AreIntersect(*first_split.first, *second_split.second, threshold) ||
+         AreIntersect(*first_split.second, *second_split.first, threshold) ||
+         AreIntersect(*first_split.second, *second_split.second, threshold);
 }
 
 } // namespace bezier
