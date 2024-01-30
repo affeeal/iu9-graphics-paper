@@ -127,6 +127,88 @@ TEST(CurveTest, SplitFourPointsCurve) {
                                    Point(5.25, 4.625)));
 }
 
+TEST(CurveTest, 2x2NoIntersection) {
+  const Curve first(std::vector<Point>{Point(1, 1), Point(2, 6)});
+  const Curve second(std::vector<Point>{Point(2, 5), Point(3, 1)});
+
+  EXPECT_FALSE(first.IsIntersect(second, 0.1));
+  EXPECT_FALSE(second.IsIntersect(first, 0.1));
+
+  EXPECT_TRUE(first.IsIntersect(second, 1));
+  EXPECT_TRUE(second.IsIntersect(first, 1));
+}
+
+TEST(CurveTest, 2x2Tangency) {
+  const Curve first(std::vector<Point>{Point(1, 1), Point(2, 6)});
+  const Curve second(std::vector<Point>{Point(2, 6), Point(3, 1)});
+
+  EXPECT_TRUE(first.IsIntersect(second, 10e-5));
+  EXPECT_TRUE(second.IsIntersect(first, 10e-5));
+}
+
+TEST(CurveTest, 2x2Intersection) {
+  const Curve first(std::vector<Point>{Point(1, 1), Point(2, 6)});
+  const Curve second(std::vector<Point>{Point(1, 6), Point(3, 1)});
+
+  EXPECT_TRUE(first.IsIntersect(second, 10e-5));
+  EXPECT_TRUE(second.IsIntersect(first, 10e-5));
+}
+
+TEST(CurveTest, 3x2NoIntersection) {
+  const Curve first(std::vector<Point>{Point(4, 2), Point(6, 8), Point(10, 4)});
+  const Curve second(std::vector<Point>{Point(5, 4), Point(6, 5)});
+
+  EXPECT_FALSE(first.IsIntersect(second, 0.01));
+  EXPECT_FALSE(second.IsIntersect(first, 0.01));
+
+  EXPECT_TRUE(first.IsIntersect(second, 0.1));
+  EXPECT_TRUE(second.IsIntersect(first, 0.1));
+}
+
+TEST(CurveTest, 3x2Tangency) {
+  const Curve first(std::vector<Point>{Point(4, 2), Point(6, 8), Point(10, 4)});
+  const Curve second(std::vector<Point>{Point(5, 5), Point(8, 6)});
+
+  EXPECT_TRUE(first.IsIntersect(second, 10e-5));
+  EXPECT_TRUE(second.IsIntersect(first, 10e-5));
+}
+
+TEST(CurveTest, 3x2Intersection) {
+  const Curve first(std::vector<Point>{Point(4, 2), Point(6, 8), Point(10, 4)});
+  const Curve second(std::vector<Point>{Point(4, 3), Point(10, 4)});
+
+  EXPECT_TRUE(first.IsIntersect(second, 10e-5));
+  EXPECT_TRUE(second.IsIntersect(first, 10e-5));
+}
+
+TEST(CurveTest, 3x2SeveralIntersections) {
+  const Curve first(std::vector<Point>{Point(4, 2), Point(6, 8), Point(10, 4)});
+  const Curve second(std::vector<Point>{Point(3, 4), Point(5, 2)});
+
+  EXPECT_TRUE(first.IsIntersect(second, 10e-5));
+  EXPECT_TRUE(second.IsIntersect(first, 10e-5));
+}
+
+TEST(CurveTest, 3x3NoIntersection) {
+  const Curve first(std::vector<Point>{Point(4, 2), Point(6, 8), Point(10, 4)});
+  const Curve second(std::vector<Point>{Point(5, 2), Point(6, 7), Point(9, 4)});
+
+  EXPECT_FALSE(first.IsIntersect(second, 0.1));
+  EXPECT_FALSE(second.IsIntersect(first, 0.1));
+
+  EXPECT_TRUE(first.IsIntersect(second, 1));
+  EXPECT_TRUE(second.IsIntersect(first, 1));
+}
+
+TEST(CurveTest, 3x3SeveralIntersections) {
+  const Curve first(std::vector<Point>{Point(4, 2), Point(6, 8), Point(10, 4)});
+  const Curve second(
+      std::vector<Point>{Point(5, 2), Point(6, 10), Point(9, 4)});
+
+  EXPECT_TRUE(first.IsIntersect(second, 10e-5));
+  EXPECT_TRUE(second.IsIntersect(first, 10e-5));
+}
+
 } // namespace
 
 } // namespace bezier
