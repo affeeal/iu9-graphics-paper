@@ -14,7 +14,7 @@ using ICurveUptr = std::unique_ptr<ICurve>;
 
 class ICurve {
 public:
-  virtual IRectangleUptr CalculateBoundingRectangle() const = 0;
+  virtual IRectangleUptr CalculateBoundingBox() const = 0;
   virtual std::pair<ICurveUptr, ICurveUptr> Split(const double t) const = 0;
   virtual bool IsIntersect(const ICurve &other,
                            const double threshold) const = 0;
@@ -29,7 +29,7 @@ public:
   Curve() = delete;
   explicit Curve(std::vector<Point> &&points);
 
-  IRectangleUptr CalculateBoundingRectangle() const override;
+  IRectangleUptr CalculateBoundingBox() const override;
   std::pair<ICurveUptr, ICurveUptr> Split(const double t) const override;
   bool IsIntersect(const ICurve &other, const double threshold) const override;
 
@@ -39,6 +39,9 @@ private:
   void SplitDeCasteljau(std::vector<Point> &left_curve_points,
                         std::vector<Point> &right_curve_points,
                         const std::vector<Point> &points, const double t) const;
+
+  bool AreIntersect(const ICurve& first, const ICurve& second,
+                    const double threshold) const;
 
   std::vector<Point> points_;
 };

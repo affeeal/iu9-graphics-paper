@@ -2,17 +2,20 @@
 
 #include <cassert>
 #include <limits>
+#include <type_traits>
 
 #include "point.hpp"
 #include "rectangle.hpp"
 
 namespace bezier {
 
+static constexpr auto kCurveCenterT = 0.5;
+
 Curve::Curve(std::vector<Point> &&points) : points_(std::move(points)) {
   assert(points_.size() >= 2);
 }
 
-IRectangleUptr Curve::CalculateBoundingRectangle() const {
+IRectangleUptr Curve::CalculateBoundingBox() const {
   auto leftmost = std::numeric_limits<double>::max();
   auto topmost = std::numeric_limits<double>::min();
   auto rightmost = std::numeric_limits<double>::min();
@@ -83,7 +86,38 @@ void Curve::SplitDeCasteljau(std::vector<Point> &left_curve_points,
 }
 
 bool Curve::IsIntersect(const ICurve &other, const double threshold) const {
-  return false; // TODO
+  return AreIntersect(*this, other, threshold);
+}
+
+bool Curve::AreIntersect(const ICurve& first, const ICurve& second,
+                         const double threshold) const {
+  const auto first_box = first.CalculateBoundingBox();
+  const auto second_box = second.CalculateBoundingBox();
+
+  assert(first_box);
+  assert(second_box);
+
+  if (!first_box->IsOverlap(*second_box)) {
+    return false;
+  }
+
+  // One of the possible completion conditions
+  if (first_box->CalculateArea() + second_box->CalculateArea() <  threshold) {
+    return true;
+  }
+
+  const auto first_split = first.Split(kCurveCenterT);
+  const auto second_split = second.Split(kCurveCenterT);
+
+  assert(first_split.first);
+  assert(first_split.second);
+  assert(second_split.first);
+  assert(second_split.second);
+
+  return AreIntersect(*first_split.first, *second_split.first, threshold)
+      || AreIntersect(*first_split.first, *second_split.second, threshold)
+      || AreIntersect(*first_split.second, *second_split.first, threshold)
+      || AreIntersect(*first_split.second, *second_split.second, threshold);
 }
 
 } // namespace bezier
