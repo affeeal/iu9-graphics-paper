@@ -1,9 +1,16 @@
 #pragma once
 
-#include <edge.hpp>
-#include <vertex.hpp>
+#include <memory>
+#include <string_view>
+
+#include "edge.hpp"
+#include "vertex.hpp"
 
 namespace graph {
+
+class IGraph;
+
+using IGraphUptr = std::unique_ptr<IGraph>;
 
 class IGraph {
 public:
@@ -19,6 +26,8 @@ public:
   explicit Graph(std::vector<IVertexUptr> &&vertices,
                  std::vector<IEdgeUptr> &&edges)
       : vertices_(std::move(vertices)), edges_(std::move(edges)) {}
+
+  static IGraphUptr FromDotFile(std::string_view filename);
 
   const std::vector<IVertexUptr> &GetVertices() const override {
     return vertices_;
