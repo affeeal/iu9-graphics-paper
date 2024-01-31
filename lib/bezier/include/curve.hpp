@@ -8,16 +8,19 @@
 
 namespace bezier {
 
+extern const double kThreshold;
+
 class ICurve;
 
 using ICurveUptr = std::unique_ptr<ICurve>;
+using Curves = std::vector<bezier::ICurveUptr>;
 
 class ICurve {
 public:
   virtual IRectangleUptr CalculateBoundingBox() const = 0;
   virtual std::pair<ICurveUptr, ICurveUptr> Split(const double t) const = 0;
   virtual bool IsIntersect(const ICurve &other,
-                           const double threshold) const = 0;
+                           const double threshold = kThreshold) const = 0;
 
   virtual const std::vector<Point> &GetPoints() const = 0;
 
@@ -31,7 +34,8 @@ public:
 
   IRectangleUptr CalculateBoundingBox() const override;
   std::pair<ICurveUptr, ICurveUptr> Split(const double t) const override;
-  bool IsIntersect(const ICurve &other, const double threshold) const override;
+  bool IsIntersect(const ICurve &other,
+                   const double threshold = kThreshold) const override;
 
   const std::vector<Point> &GetPoints() const override { return points_; }
 

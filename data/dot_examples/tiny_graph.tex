@@ -1,0 +1,41 @@
+\documentclass{article}
+\usepackage[x11names, svgnames, rgb]{xcolor}
+\usepackage[utf8]{inputenc}
+\usepackage{tikz}
+\usetikzlibrary{snakes,arrows,shapes}
+\usepackage{amsmath}
+%
+%
+
+%
+
+%
+
+\begin{document}
+\pagestyle{empty}
+%
+%
+%
+
+\enlargethispage{100cm}
+% Start of code
+\begin{tikzpicture}[>=latex',line join=bevel,]
+%%
+\node (A) at (54.0bp,234.0bp) [draw,ellipse] {$A$};
+  \node (B) at (27.0bp,162.0bp) [draw,ellipse] {$B$};
+  \node (C) at (27.0bp,90.0bp) [draw,ellipse] {$C$};
+  \node (D) at (54.0bp,18.0bp) [draw,ellipse] {$D$};
+  \draw [->] (A) ..controls (44.486bp,208.34bp) and (40.666bp,198.43bp)  .. (B);
+  \draw [->] (B) ..controls (27.0bp,135.98bp) and (27.0bp,126.71bp)  .. (C);
+  \draw [->] (C) ..controls (36.514bp,64.335bp) and (40.334bp,54.431bp)  .. (D);
+  \draw [->] (D) ..controls (59.676bp,46.431bp) and (61.981bp,59.91bp)  .. (63.0bp,72.0bp) .. controls (67.032bp,119.83bp) and (67.032bp,132.17bp)  .. (63.0bp,180.0bp) .. controls (62.283bp,188.5bp) and (60.931bp,197.69bp)  .. (A);
+%
+\end{tikzpicture}
+% End of code
+
+%
+\end{document}
+%
+
+
+
