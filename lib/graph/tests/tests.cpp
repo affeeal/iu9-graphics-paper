@@ -1,8 +1,7 @@
 #include <algorithm>
-#include <array>
-#include <gtest/gtest.h>
 #include <iostream>
-#include <ostream>
+
+#include <gtest/gtest.h>
 
 #include "curve.hpp"
 #include "edge.hpp"
@@ -36,18 +35,21 @@ TEST(GraphTest, SimpleGraph) {
         std::vector<bezier::Point>{bezier::Point(1, 4), bezier::Point(3, 4)}));
     edges.push_back(Edge(*vertices[0], *vertices[1], std::move(curves)));
   }
+  
   {
     bezier::Curves curves;
     curves.push_back(std::make_unique<bezier::Curve>(
         std::vector<bezier::Point>{bezier::Point(1, 1), bezier::Point(3, 1)}));
     edges.push_back(Edge(*vertices[2], *vertices[3], std::move(curves)));
   }
+  
   {
     bezier::Curves curves;
     curves.push_back(std::make_unique<bezier::Curve>(
         std::vector<bezier::Point>{bezier::Point(1, 4), bezier::Point(3, 1)}));
     edges.push_back(Edge(*vertices[0], *vertices[3], std::move(curves)));
   }
+
   {
     bezier::Curves curves;
     curves.push_back(std::make_unique<bezier::Curve>(
@@ -76,6 +78,7 @@ TEST(GraphTest, CurveEdges) {
 
   std::vector<Edge> edges;
   edges.reserve(3);
+
   {
     bezier::Curves curves;
     curves.push_back(std::make_unique<bezier::Curve>(std::vector<bezier::Point>{
@@ -85,6 +88,7 @@ TEST(GraphTest, CurveEdges) {
         bezier::Point(3, 4), bezier::Point(5, 1), bezier::Point(7, 4)}));
     edges.push_back(Edge(*vertices[0], *vertices[1], std::move(curves)));
   }
+
   {
     bezier::Curves curves;
     curves.push_back(std::make_unique<bezier::Curve>(
@@ -93,6 +97,7 @@ TEST(GraphTest, CurveEdges) {
         bezier::Point(5, 5), bezier::Point(6, 4), bezier::Point(5, 3)}));
     edges.push_back(Edge(*vertices[2], *vertices[3], std::move(curves)));
   }
+
   {
     bezier::Curves curves;
     curves.push_back(std::make_unique<bezier::Curve>(
@@ -143,6 +148,36 @@ TEST(GraphTest, TinyFromFile) {
         Edge(*expected_vertices[0], *expected_vertices[1], std::move(curves)));
   }
 
+  {
+    bezier::Curves curves;
+    curves.push_back(std::make_unique<bezier::Curve>(std::vector<bezier::Point>{
+        bezier::Point(27.0, 90.0), bezier::Point(33.714, 115.83),
+        bezier::Point(33.948, 125.37), bezier::Point(27.0, 162.0)}));
+    expected_edges.push_back(
+        Edge(*expected_vertices[1], *expected_vertices[0], std::move(curves)));
+  }
+
+  {
+    bezier::Curves curves;
+    curves.push_back(std::make_unique<bezier::Curve>(std::vector<bezier::Point>{
+        bezier::Point(27.0, 90.0), bezier::Point(36.514, 64.335),
+        bezier::Point(40.334, 54.431), bezier::Point(54.0, 18.0)}));
+    expected_edges.push_back(
+        Edge(*expected_vertices[1], *expected_vertices[2], std::move(curves)));
+  }
+
+  {
+    bezier::Curves curves;
+    curves.push_back(std::make_unique<bezier::Curve>(std::vector<bezier::Point>{
+        bezier::Point(54.0, 18.0), bezier::Point(64.687, 53.977),
+        bezier::Point(70.486, 83.656), bezier::Point(63.0, 108.0)}));
+    curves.push_back(std::make_unique<bezier::Curve>(std::vector<bezier::Point>{
+        bezier::Point(63.0, 108.0), bezier::Point(59.714, 118.69),
+        bezier::Point(53.46, 129.15), bezier::Point(27.0, 162.0)}));
+    expected_edges.push_back(
+        Edge(*expected_vertices[2], *expected_vertices[0], std::move(curves)));
+  }
+
   const auto &edges = graph->GetEdges();
   EXPECT_EQ(edges.size(), 4);
 
@@ -165,6 +200,11 @@ TEST(GraphTest, TinyFromFile) {
 
       std::cerr << std::endl;
     }
+  }
+
+  for (const auto &expected_edge : expected_edges) {
+    EXPECT_NE(std::find(edges.begin(), edges.end(), expected_edge),
+              edges.end());
   }
 }
 

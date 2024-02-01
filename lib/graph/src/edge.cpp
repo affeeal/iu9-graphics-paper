@@ -18,8 +18,19 @@ bool Edge::IsIntersect(const Edge &other) const {
 }
 
 bool Edge::operator==(const Edge &other) const {
-  return start_ == other.start_ && end_ == other.GetEnd() &&
-         curves_ == other.GetCurves();
+  if (start_ != other.GetStart() || end_ != other.GetEnd() ||
+      curves_.size() != other.GetCurves().size()) {
+    return false;
+  }
+
+  const auto &other_curves = other.GetCurves();
+  for (auto i = 0; i < curves_.size(); i++) {
+    if (curves_[i]->GetPoints() != other_curves[i]->GetPoints()) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 } // namespace graph
