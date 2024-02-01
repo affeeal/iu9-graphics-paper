@@ -23,28 +23,28 @@ TEST(GraphTest, SimpleGraph) {
   std::vector<IEdgeUptr> edges;
   edges.reserve(4);
   {
-    Curves curves;
+    bezier::Curves curves;
     curves.push_back(std::make_unique<bezier::Curve>(
         std::vector<bezier::Point>{bezier::Point(1, 4), bezier::Point(3, 4)}));
     edges.push_back(
         std::make_unique<Edge>(*vertices[0], *vertices[1], std::move(curves)));
   }
   {
-    Curves curves;
+    bezier::Curves curves;
     curves.push_back(std::make_unique<bezier::Curve>(
         std::vector<bezier::Point>{bezier::Point(1, 1), bezier::Point(3, 1)}));
     edges.push_back(
         std::make_unique<Edge>(*vertices[2], *vertices[3], std::move(curves)));
   }
   {
-    Curves curves;
+    bezier::Curves curves;
     curves.push_back(std::make_unique<bezier::Curve>(
         std::vector<bezier::Point>{bezier::Point(1, 4), bezier::Point(3, 1)}));
     edges.push_back(
         std::make_unique<Edge>(*vertices[0], *vertices[3], std::move(curves)));
   }
   {
-    Curves curves;
+    bezier::Curves curves;
     curves.push_back(std::make_unique<bezier::Curve>(
         std::vector<bezier::Point>{bezier::Point(1, 1), bezier::Point(3, 4)}));
     edges.push_back(
@@ -72,7 +72,7 @@ TEST(GraphTest, CurveEdges) {
   std::vector<IEdgeUptr> edges;
   edges.reserve(3);
   {
-    Curves curves;
+    bezier::Curves curves;
     curves.push_back(std::make_unique<bezier::Curve>(std::vector<bezier::Point>{
         bezier::Point(1, 4), bezier::Point(1.5, 6), bezier::Point(2.5, 6),
         bezier::Point(3, 4)}));
@@ -82,7 +82,7 @@ TEST(GraphTest, CurveEdges) {
         std::make_unique<Edge>(*vertices[0], *vertices[1], std::move(curves)));
   }
   {
-    Curves curves;
+    bezier::Curves curves;
     curves.push_back(std::make_unique<bezier::Curve>(
         std::vector<bezier::Point>{bezier::Point(1, 2), bezier::Point(5, 5)}));
     curves.push_back(std::make_unique<bezier::Curve>(std::vector<bezier::Point>{
@@ -91,7 +91,7 @@ TEST(GraphTest, CurveEdges) {
         std::make_unique<Edge>(*vertices[2], *vertices[3], std::move(curves)));
   }
   {
-    Curves curves;
+    bezier::Curves curves;
     curves.push_back(std::make_unique<bezier::Curve>(
         std::vector<bezier::Point>{bezier::Point(2, 1), bezier::Point(3, 2),
                                    bezier::Point(7, 2), bezier::Point(8, 3)}));
