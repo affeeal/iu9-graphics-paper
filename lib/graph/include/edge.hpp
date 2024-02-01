@@ -8,37 +8,24 @@
 
 namespace graph {
 
-using Curves = std::vector<bezier::ICurveUptr>;
-
-class IEdge {
-public:
-  virtual bool IsIntersect(const IEdge &other) const = 0;
-
-  virtual const IVertex &GetStart() const = 0;
-  virtual const IVertex &GetEnd() const = 0;
-  virtual const Curves &GetCurves() const = 0;
-
-  virtual ~IEdge() {}
-};
-
-using IEdgeUptr = std::unique_ptr<IEdge>;
-
-class Edge : public IEdge {
+class Edge {
 public:
   Edge() = delete;
-  explicit Edge(const IVertex &start, const IVertex &end, Curves &&curves)
+  Edge(const Vertex &start, const Vertex &end, bezier::Curves &&curves)
       : start_(start), end_(end), curves_(std::move(curves)) {}
 
-  bool IsIntersect(const IEdge &other) const override;
+  bool IsIntersect(const Edge &other) const;
 
-  const IVertex &GetStart() const override { return start_; }
-  const IVertex &GetEnd() const override { return end_; }
-  const Curves &GetCurves() const override { return curves_; }
+  bool operator==(const Edge &other) const;
+
+  const Vertex &GetStart() const { return start_; }
+  const Vertex &GetEnd() const { return end_; }
+  const bezier::Curves &GetCurves() const { return curves_; }
 
 private:
-  const IVertex &start_;
-  const IVertex &end_;
-  Curves curves_;
+  const Vertex &start_;
+  const Vertex &end_;
+  bezier::Curves curves_;
 };
 
 } // namespace graph

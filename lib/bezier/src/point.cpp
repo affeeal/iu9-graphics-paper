@@ -1,5 +1,7 @@
 #include "point.hpp"
 
+#include <utility>
+
 namespace bezier {
 
 Point Point::operator+(const Point &other) const {

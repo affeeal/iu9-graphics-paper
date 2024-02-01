@@ -1,34 +1,28 @@
 #pragma once
 
 #include <memory>
-#include <string_view>
+
+#include "utils.hpp"
 
 namespace graph {
 
-class IVertex {
+class Vertex;
+
+using VertexUptr = std::unique_ptr<Vertex>;
+
+class Vertex {
 public:
-  virtual std::string_view GetLabel() const = 0;
+  Vertex() : x_(0), y_(0), label_(std::string()) {}
+  Vertex(double x, double y, const std::string &label);
 
-  virtual double GetX() const = 0;
-  virtual double GetY() const = 0;
+  const std::string &GetLabel() const { return label_; }
+  double GetX() const { return x_; }
+  double GetY() const { return y_; }
 
-  virtual ~IVertex() {}
-};
-
-using IVertexUptr = std::unique_ptr<IVertex>;
-
-class Vertex : public IVertex {
-public:
-  Vertex() = delete;
-  explicit Vertex(double x, double y, std::string_view label)
-      : x_(std::move(x)), y_(std::move(y)), label_(std::move(label)) {}
-
-  std::string_view GetLabel() const override { return label_; }
-  double GetX() const override { return x_; }
-  double GetY() const override { return y_; }
+  bool operator==(const Vertex &other) const;
 
 private:
-  std::string_view label_;
+  std::string label_;
   double x_;
   double y_;
 };

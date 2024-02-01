@@ -1,33 +1,30 @@
 #pragma once
 
-#include <edge.hpp>
-#include <vertex.hpp>
+#include <memory>
+
+#include "edge.hpp"
+#include "vertex.hpp"
 
 namespace graph {
 
-class IGraph {
-public:
-  virtual const std::vector<IVertexUptr> &GetVertices() const = 0;
-  virtual const std::vector<IEdgeUptr> &GetEdges() const = 0;
+class Graph;
 
-  virtual ~IGraph() {}
-};
+using GraphUptr = std::unique_ptr<Graph>;
 
-class Graph : public IGraph {
+class Graph {
 public:
   Graph() = delete;
-  explicit Graph(std::vector<IVertexUptr> &&vertices,
-                 std::vector<IEdgeUptr> &&edges)
+  Graph(std::vector<VertexUptr> &&vertices, std::vector<Edge> &&edges)
       : vertices_(std::move(vertices)), edges_(std::move(edges)) {}
 
-  const std::vector<IVertexUptr> &GetVertices() const override {
-    return vertices_;
-  }
-  const std::vector<IEdgeUptr> &GetEdges() const override { return edges_; }
+  static GraphUptr FromDotFile(const std::string &filename);
+
+  const std::vector<VertexUptr> &GetVertices() const { return vertices_; }
+  const std::vector<Edge> &GetEdges() const { return edges_; }
 
 private:
-  std::vector<IVertexUptr> vertices_;
-  std::vector<IEdgeUptr> edges_;
+  std::vector<VertexUptr> vertices_;
+  std::vector<Edge> edges_;
 };
 
 } // namespace graph
