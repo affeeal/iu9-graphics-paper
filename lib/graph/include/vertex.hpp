@@ -6,25 +6,16 @@
 
 namespace graph {
 
-class IVertex {
+class Vertex {
 public:
-  virtual double GetX() const = 0;
-  virtual double GetY() const = 0;
-  virtual const std::string &GetLabel() const = 0;
-
-  virtual ~IVertex() {}
-};
-
-using IVertexUptr = std::unique_ptr<IVertex>;
-
-class Vertex : public IVertex {
-public:
-  Vertex() = delete;
+  Vertex() : x_(0), y_(0), label_(std::string()) {}
   Vertex(double x, double y, const std::string &label);
 
-  const std::string &GetLabel() const override { return label_; }
-  double GetX() const override { return x_; }
-  double GetY() const override { return y_; }
+  const std::string &GetLabel() const { return label_; }
+  double GetX() const { return x_; }
+  double GetY() const { return y_; }
+
+  bool operator==(const Vertex &other) const;
 
 private:
   std::string label_;

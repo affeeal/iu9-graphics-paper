@@ -15,7 +15,7 @@ namespace graph {
 
 namespace {
 
-using LabelToVertex = std::unordered_map<std::string, IVertexUptr>;
+using LabelToVertex = std::unordered_map<std::string, Vertex>;
 
 constexpr std::string_view kTikzpictureStart = "\\begin{tikzpicture}";
 constexpr std::string_view kTikzpictureEnd = "\\end{tikzpicture}";
@@ -102,7 +102,8 @@ void HandleNodeCommand(std::string &&command, LabelToVertex &vertices) {
 
   const auto coordinates = NodeToPoint(std::move(nodes.back()));
 
-  vertices[nodes.front()] = std::make_unique<Vertex>(coordinates.first, coordinates.second, nodes.front());
+  vertices[nodes.front()] =
+      Vertex(coordinates.first, coordinates.second, nodes.front());
 }
 
 std::vector<bezier::Point> GetPoints(std::vector<std::string> &&nodes,
@@ -113,7 +114,7 @@ std::vector<bezier::Point> GetPoints(std::vector<std::string> &&nodes,
   for (auto i = 0; i < nodes.size(); i++) {
     if (i == 0 || i == nodes.size() - 1) {
       const auto &vertex = vertices.at(std::move(nodes[i]));
-      points.push_back(bezier::Point(vertex->GetX(), vertex->GetY()));
+      points.push_back(bezier::Point(vertex.GetX(), vertex.GetY()));
     } else {
       const auto coordinates = NodeToPoint(std::move(nodes[i]));
       points.push_back(bezier::Point(coordinates.first, coordinates.second));
@@ -142,7 +143,7 @@ bezier::Curves GetCurves(std::vector<bezier::Point> &&points) {
   return curves;
 }
 
-void HandleDrawCommand(std::string &&command, std::vector<IEdgeUptr> &edges,
+void HandleDrawCommand(std::string &&command, std::vector<Edge> &edges,
                        const LabelToVertex &vertices) {
   auto nodes = GetNodes(std::move(command));
 
@@ -156,7 +157,7 @@ void HandleDrawCommand(std::string &&command, std::vector<IEdgeUptr> &edges,
   auto points = GetPoints(std::move(nodes), vertices);
   auto edge_curves = GetCurves(std::move(points));
 
-  edges.push_back(std::make_unique<Edge>(*start, *end, std::move(edge_curves)));
+  edges.push_back(Edge(start, end, std::move(edge_curves)));
 }
 
 } // namespace
@@ -185,7 +186,7 @@ GraphUptr Graph::FromDotFile(const std::string &filepath) {
   }
 
   LabelToVertex vertices;
-  std::vector<IEdgeUptr> edges;
+  std::vector<Edge> edges;
 
   // TODO: split
   while (std::getline(tex_file, line)) {
