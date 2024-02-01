@@ -6,6 +6,10 @@
 
 namespace graph {
 
+class Vertex;
+
+using VertexUptr = std::unique_ptr<Vertex>;
+
 class Vertex {
 public:
   Vertex() : x_(0), y_(0), label_(std::string()) {}

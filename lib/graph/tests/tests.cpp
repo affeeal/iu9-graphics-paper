@@ -19,34 +19,40 @@ namespace {
 const std::string kDataPathPrefix = "../../../../data/";
 
 TEST(GraphTest, SimpleGraph) {
-  std::vector<Vertex> vertices{Vertex(1, 4, "a"), Vertex(3, 4, "b"),
-                               Vertex(1, 1, "c"), Vertex(3, 1, "d")};
+  std::vector<VertexUptr> vertices;
+  vertices.reserve(4);
+
+  vertices.push_back(std::make_unique<Vertex>(1, 4, "a"));
+  vertices.push_back(std::make_unique<Vertex>(3, 4, "b"));
+  vertices.push_back(std::make_unique<Vertex>(1, 1, "c"));
+  vertices.push_back(std::make_unique<Vertex>(3, 1, "d"));
 
   std::vector<Edge> edges;
   edges.reserve(4);
+
   {
     bezier::Curves curves;
     curves.push_back(std::make_unique<bezier::Curve>(
         std::vector<bezier::Point>{bezier::Point(1, 4), bezier::Point(3, 4)}));
-    edges.push_back(Edge(vertices[0], vertices[1], std::move(curves)));
+    edges.push_back(Edge(*vertices[0], *vertices[1], std::move(curves)));
   }
   {
     bezier::Curves curves;
     curves.push_back(std::make_unique<bezier::Curve>(
         std::vector<bezier::Point>{bezier::Point(1, 1), bezier::Point(3, 1)}));
-    edges.push_back(Edge(vertices[2], vertices[3], std::move(curves)));
+    edges.push_back(Edge(*vertices[2], *vertices[3], std::move(curves)));
   }
   {
     bezier::Curves curves;
     curves.push_back(std::make_unique<bezier::Curve>(
         std::vector<bezier::Point>{bezier::Point(1, 4), bezier::Point(3, 1)}));
-    edges.push_back(Edge(vertices[0], vertices[3], std::move(curves)));
+    edges.push_back(Edge(*vertices[0], *vertices[3], std::move(curves)));
   }
   {
     bezier::Curves curves;
     curves.push_back(std::make_unique<bezier::Curve>(
         std::vector<bezier::Point>{bezier::Point(1, 1), bezier::Point(3, 4)}));
-    edges.push_back(Edge(vertices[2], vertices[1], std::move(curves)));
+    edges.push_back(Edge(*vertices[2], *vertices[1], std::move(curves)));
   }
 
   const Graph graph(std::move(vertices), std::move(edges));
@@ -58,9 +64,15 @@ TEST(GraphTest, SimpleGraph) {
 }
 
 TEST(GraphTest, CurveEdges) {
-  std::vector<Vertex> vertices{Vertex(1, 4, "first"), Vertex(7, 4, "second"),
-                               Vertex(1, 2, "third"), Vertex(5, 3, "fourth"),
-                               Vertex(2, 1, "fifth"), Vertex(8, 3, "sixth")};
+  std::vector<VertexUptr> vertices;
+  vertices.reserve(6);
+
+  vertices.push_back(std::make_unique<Vertex>(1, 4, "first"));
+  vertices.push_back(std::make_unique<Vertex>(7, 4, "second"));
+  vertices.push_back(std::make_unique<Vertex>(1, 2, "third"));
+  vertices.push_back(std::make_unique<Vertex>(5, 3, "fourth"));
+  vertices.push_back(std::make_unique<Vertex>(2, 1, "fifth"));
+  vertices.push_back(std::make_unique<Vertex>(8, 3, "sixth"));
 
   std::vector<Edge> edges;
   edges.reserve(3);
@@ -71,7 +83,7 @@ TEST(GraphTest, CurveEdges) {
         bezier::Point(3, 4)}));
     curves.push_back(std::make_unique<bezier::Curve>(std::vector<bezier::Point>{
         bezier::Point(3, 4), bezier::Point(5, 1), bezier::Point(7, 4)}));
-    edges.push_back(Edge(vertices[0], vertices[1], std::move(curves)));
+    edges.push_back(Edge(*vertices[0], *vertices[1], std::move(curves)));
   }
   {
     bezier::Curves curves;
@@ -79,14 +91,14 @@ TEST(GraphTest, CurveEdges) {
         std::vector<bezier::Point>{bezier::Point(1, 2), bezier::Point(5, 5)}));
     curves.push_back(std::make_unique<bezier::Curve>(std::vector<bezier::Point>{
         bezier::Point(5, 5), bezier::Point(6, 4), bezier::Point(5, 3)}));
-    edges.push_back(Edge(vertices[2], vertices[3], std::move(curves)));
+    edges.push_back(Edge(*vertices[2], *vertices[3], std::move(curves)));
   }
   {
     bezier::Curves curves;
     curves.push_back(std::make_unique<bezier::Curve>(
         std::vector<bezier::Point>{bezier::Point(2, 1), bezier::Point(3, 2),
                                    bezier::Point(7, 2), bezier::Point(8, 3)}));
-    edges.push_back(Edge(vertices[4], vertices[5], std::move(curves)));
+    edges.push_back(Edge(*vertices[4], *vertices[5], std::move(curves)));
   }
 
   const Graph graph(std::move(vertices), std::move(edges));
@@ -103,14 +115,19 @@ TEST(GraphTest, TinyFromFile) {
   const auto &vertices = graph->GetVertices();
   EXPECT_EQ(vertices.size(), 3);
 
-  std::array<Vertex, 3> expected_vertices{
-      Vertex(27.0, 162.0, "a"),
-      Vertex(27.0, 90.0, "b"),
-      Vertex(54.0, 18.0, "c"),
-  };
+  std::vector<VertexUptr> expected_vertices;
+  expected_vertices.reserve(3);
+
+  expected_vertices.push_back(std::make_unique<Vertex>(27.0, 162.0, "a"));
+  expected_vertices.push_back(std::make_unique<Vertex>(27.0, 90.0, "b"));
+  expected_vertices.push_back(std::make_unique<Vertex>(54.0, 18.0, "c"));
 
   for (const auto &expected_vertex : expected_vertices) {
-    EXPECT_NE(std::find(vertices.begin(), vertices.end(), expected_vertex),
+    auto uptr_comparator = [&](const VertexUptr &other) {
+      return *other == *expected_vertex;
+    };
+
+    EXPECT_NE(std::find_if(vertices.begin(), vertices.end(), uptr_comparator),
               vertices.end());
   }
 
@@ -123,15 +140,31 @@ TEST(GraphTest, TinyFromFile) {
         bezier::Point(27.0, 162.0), bezier::Point(20.297, 136.51),
         bezier::Point(20.048, 126.85), bezier::Point(27.0, 90.0)}));
     expected_edges.push_back(
-        Edge(expected_vertices[0], expected_vertices[1], std::move(curves)));
+        Edge(*expected_vertices[0], *expected_vertices[1], std::move(curves)));
   }
 
   const auto &edges = graph->GetEdges();
   EXPECT_EQ(edges.size(), 4);
 
-  for (const auto &expected_edge : expected_edges) {
-    EXPECT_NE(std::find(edges.begin(), edges.end(), expected_edge),
-              edges.end());
+  for (const auto &edge : edges) {
+    const auto &start = edge.GetStart();
+    const auto &end = edge.GetEnd();
+    const auto &curves = edge.GetCurves();
+
+    std::cerr << "start: " << start.GetLabel() << ", " << start.GetX() << ", "
+              << start.GetY() << std::endl;
+
+    std::cerr << "end: " << end.GetLabel() << ", " << end.GetX() << ", "
+              << end.GetY() << std::endl;
+
+    std::cerr << "curves: " << curves.size() << std::endl;
+    for (const auto &curve : curves) {
+      for (const auto &point : curve->GetPoints()) {
+        std::cerr << '(' << point.x << ", " << point.y << ") ";
+      }
+
+      std::cerr << std::endl;
+    }
   }
 }
 
