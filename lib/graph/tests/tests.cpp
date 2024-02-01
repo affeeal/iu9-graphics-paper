@@ -1,5 +1,7 @@
-#include <gmock/gmock-matchers.h>
+#include <algorithm>
+#include <array>
 #include <gtest/gtest.h>
+#include <ostream>
 
 #include "curve.hpp"
 #include "edge.hpp"
@@ -11,6 +13,8 @@ const double bezier::kThreshold = 10e-5;
 namespace graph {
 
 namespace {
+
+const std::string kDataPathPrefix = "../../../../data/";
 
 TEST(GraphTest, SimpleGraph) {
   std::vector<IVertexUptr> vertices;
@@ -105,6 +109,30 @@ TEST(GraphTest, CurveEdges) {
   EXPECT_TRUE(graph_edges[0]->IsIntersect(*graph_edges[1]));
   EXPECT_FALSE(graph_edges[0]->IsIntersect(*graph_edges[2]));
   EXPECT_FALSE(graph_edges[1]->IsIntersect(*graph_edges[2]));
+}
+
+TEST(GraphTest, TinyFromFile) {
+  const auto graph = Graph::FromDotFile(kDataPathPrefix + "tiny.dot");
+
+  /*
+  std::array<IVertexUptr, 3> expected_vertices{
+      std::make_unique<Vertex>(27.0, 162.0, "a"),
+      std::make_unique<Vertex>(27.0, 90.0, "b"),
+      std::make_unique<Vertex>(54.0, 18.0, "c"),
+  };
+  */
+
+  const auto &vertices = graph->GetVertices();
+  EXPECT_EQ(vertices.size(), 3);
+
+  /*
+  for (const auto &vertex : expected_vertices) {
+    EXPECT_TRUE(std::find(vertices.begin(), vertices.end(), vertex));
+  }
+  */
+
+  const auto &edges = graph->GetEdges();
+  EXPECT_EQ(edges.size(), 4);
 }
 
 } // namespace

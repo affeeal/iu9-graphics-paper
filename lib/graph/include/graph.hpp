@@ -18,7 +18,7 @@ public:
   Graph(std::vector<IVertexUptr> &&vertices, std::vector<IEdgeUptr> &&edges)
       : vertices_(std::move(vertices)), edges_(std::move(edges)) {}
 
-  static GraphUptr FromDotFile(std::string filename);
+  static GraphUptr FromDotFile(const std::string &filename);
 
   const std::vector<IVertexUptr> &GetVertices() const { return vertices_; }
   const std::vector<IEdgeUptr> &GetEdges() const { return edges_; }

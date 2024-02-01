@@ -8,6 +8,7 @@
 #include "curve.hpp"
 #include "edge.hpp"
 #include "point.hpp"
+#include "utils.hpp"
 #include "vertex.hpp"
 
 namespace graph {
@@ -29,7 +30,40 @@ constexpr char kDrawCommandEnd = ';';
 
 constexpr std::size_t kCurveSize = 4;
 
-bezier::Point NodeToPoint(std::string &&node) {
+// TODO: optimize
+std::vector<std::string> GetNodes(std::string &&command) {
+  std::vector<std::string> nodes;
+  std::stringstream ss(std::move(command));
+
+  while (true) {
+    while (!ss.eof() && ss.get() != kNodeStart) {
+    }
+
+    if (ss.eof()) {
+      break;
+    }
+
+    std::string node = "";
+    while (!ss.eof()) {
+      const auto character = ss.get();
+      if (character == kNodeEnd) {
+        break;
+      }
+
+      node.push_back(character);
+    }
+
+    if (ss.eof()) {
+      throw std::runtime_error("Failed to parse command node");
+    }
+
+    nodes.push_back(std::move(node));
+  }
+
+  return nodes;
+}
+
+std::pair<double, double> NodeToPoint(std::string &&node) {
   std::stringstream ss(std::move(node));
 
   std::string x = "";
@@ -39,7 +73,7 @@ bezier::Point NodeToPoint(std::string &&node) {
       break;
     }
 
-    x.push_back(ss.get());
+    x.push_back(character);
   }
 
   while (!ss.eof() && ss.get() != kCoordinatesDivider) {
@@ -52,54 +86,23 @@ bezier::Point NodeToPoint(std::string &&node) {
       break;
     }
 
-    y.push_back(ss.get());
+    y.push_back(character);
   }
 
   if (ss.eof()) {
     throw std::runtime_error("Failed to parse node coordinates");
   }
 
-  return bezier::Point(std::stod(std::move(x)), std::stod(std::move(y)));
-}
-
-std::vector<std::string> GetCommandNodes(std::string &&command) {
-  std::vector<std::string> nodes;
-  std::stringstream ss(std::move(command));
-
-  do {
-    while (!ss.eof() && ss.get() != kNodeStart) {
-    }
-
-    std::string node = "";
-    while (!ss.eof()) {
-      const auto character = ss.get();
-      if (character == kNodeEnd) {
-        break;
-      }
-
-      node.push_back(ss.get());
-    }
-
-    if (ss.eof()) {
-      throw std::runtime_error("Failed to parse command node");
-    }
-
-    nodes.push_back(std::move(node));
-  } while (ss.get() != kDrawCommandEnd);
-
-  return nodes;
+  return std::make_pair(std::stod(std::move(x)), std::stod(std::move(y)));
 }
 
 void HandleNodeCommand(std::string &&command, LabelToVertex &vertices) {
-  std::stringstream ss(std::move(command));
+  auto nodes = GetNodes(std::move(command));
+  assert(nodes.size() == 2); // label and coordinates
 
-  auto nodes = GetCommandNodes(std::move(command));
-  assert(nodes.size() == 2);
+  const auto coordinates = NodeToPoint(std::move(nodes.back()));
 
-  auto &label = nodes.front();
-  auto point = NodeToPoint(std::move(nodes.back()));
-
-  vertices[label] = std::make_unique<Vertex>(point.x, point.y, label);
+  vertices[nodes.front()] = std::make_unique<Vertex>(coordinates.first, coordinates.second, nodes.front());
 }
 
 std::vector<bezier::Point> GetPoints(std::vector<std::string> &&nodes,
@@ -112,7 +115,8 @@ std::vector<bezier::Point> GetPoints(std::vector<std::string> &&nodes,
       const auto &vertex = vertices.at(std::move(nodes[i]));
       points.push_back(bezier::Point(vertex->GetX(), vertex->GetY()));
     } else {
-      points.push_back(NodeToPoint(std::move(nodes[i])));
+      const auto coordinates = NodeToPoint(std::move(nodes[i]));
+      points.push_back(bezier::Point(coordinates.first, coordinates.second));
     }
   }
 
@@ -132,8 +136,7 @@ bezier::Curves GetCurves(std::vector<bezier::Point> &&points) {
     }
     curve_points.push_back(points[(i + 1) * (kCurveSize - 1)]);
 
-    curves.push_back(
-        std::make_unique<bezier::Curve>(std::move(curve_points)));
+    curves.push_back(std::make_unique<bezier::Curve>(std::move(curve_points)));
   }
 
   return curves;
@@ -141,7 +144,7 @@ bezier::Curves GetCurves(std::vector<bezier::Point> &&points) {
 
 void HandleDrawCommand(std::string &&command, std::vector<IEdgeUptr> &edges,
                        const LabelToVertex &vertices) {
-  auto nodes = GetCommandNodes(std::move(command));
+  auto nodes = GetNodes(std::move(command));
 
   assert(nodes.size() == kCurveSize ||
          nodes.size() > kCurveSize &&
@@ -156,29 +159,16 @@ void HandleDrawCommand(std::string &&command, std::vector<IEdgeUptr> &edges,
   edges.push_back(std::make_unique<Edge>(*start, *end, std::move(edge_curves)));
 }
 
-template <typename Key, typename Value>
-std::vector<Value> UmapToValues(std::unordered_map<Key, Value> &&um) {
-  std::vector<Value> values;
-  values.resize(um.size());
-
-  for (auto &record : um) {
-    values.push_back(std::move(record.second));
-  }
-
-  return values;
-}
-
 } // namespace
 
-GraphUptr Graph::FromDotFile(std::string filename) {
-  auto tex_filename = std::move(filename) + ".tex";
-
+GraphUptr Graph::FromDotFile(const std::string &filepath) {
   {
-    const auto command = "dot2tex -ftikz -tmath -o " + tex_filename;
+    const auto command =
+        "dot2tex " + filepath + " -ftikz -tmath -o " + filepath + ".tex";
     std::system(command.c_str());
   }
 
-  std::ifstream tex_file(tex_filename);
+  std::ifstream tex_file(filepath + ".tex");
   if (!tex_file.is_open()) {
     throw std::runtime_error("Failed to open .tex file");
   }
@@ -209,11 +199,11 @@ GraphUptr Graph::FromDotFile(std::string filename) {
   }
 
   {
-    const auto command = "rm " + std::move(tex_filename);
+    const auto command = "rm " + std::move(filepath + ".tex");
     std::system(command.c_str());
   }
 
-  return std::make_unique<Graph>(UmapToValues(std::move(vertices)),
+  return std::make_unique<Graph>(utils::UmapToValues(std::move(vertices)),
                                  std::move(edges));
 }
 
