@@ -2,7 +2,6 @@
 
 #include <cassert>
 #include <fstream>
-#include <iostream>
 #include <sstream>
 #include <unordered_map>
 
@@ -97,24 +96,25 @@ std::pair<double, double> NodeToPoint(std::string &&node) {
   return std::make_pair(std::stod(std::move(x)), std::stod(std::move(y)));
 }
 
-void HandleNodeCommand(std::string &&command, LabelToVertex &vertices) {
+void HandleNodeCommand(std::string &&command,
+                       LabelToVertex &labels_to_vertices) {
   auto nodes = GetNodes(std::move(command));
   assert(nodes.size() == 2); // label and coordinates
 
   const auto coordinates = NodeToPoint(std::move(nodes.back()));
 
-  vertices[nodes.front()] = std::make_unique<Vertex>(
+  labels_to_vertices[nodes.front()] = std::make_unique<Vertex>(
       coordinates.first, coordinates.second, nodes.front());
 }
 
 std::vector<bezier::Point> GetPoints(std::vector<std::string> &&nodes,
-                                     const LabelToVertex &vertices) {
+                                     const LabelToVertex &labels_to_vertices) {
   std::vector<bezier::Point> points;
   points.reserve(nodes.size());
 
   for (auto i = 0; i < nodes.size(); i++) {
     if (i == 0 || i == nodes.size() - 1) {
-      const auto &vertex = vertices.at(std::move(nodes[i]));
+      const auto &vertex = labels_to_vertices.at(std::move(nodes[i]));
       points.push_back(bezier::Point(vertex->GetX(), vertex->GetY()));
     } else {
       const auto coordinates = NodeToPoint(std::move(nodes[i]));
@@ -145,20 +145,18 @@ bezier::Curves GetCurves(std::vector<bezier::Point> &&points) {
 }
 
 void HandleDrawCommand(std::string &&command, std::vector<Edge> &edges,
-                       const LabelToVertex &vertices) {
+                       const LabelToVertex &labels_to_vertices) {
   auto nodes = GetNodes(std::move(command));
 
   assert(nodes.size() == kCurveSize ||
          nodes.size() > kCurveSize &&
              nodes.size() % kCurveSize == kCurveSize - 1);
 
-  const auto &start = vertices.at(nodes.front());
-  const auto &end = vertices.at(nodes.back());
+  const auto &start = labels_to_vertices.at(nodes.front());
+  const auto &end = labels_to_vertices.at(nodes.back());
 
-  auto points = GetPoints(std::move(nodes), vertices);
-  std::cerr << "points size: " << points.size() << std::endl;
+  auto points = GetPoints(std::move(nodes), labels_to_vertices);
   auto edge_curves = GetCurves(std::move(points));
-  std::cerr << "curves size: " << edge_curves.size() << std::endl;
 
   edges.push_back(Edge(*start, *end, std::move(edge_curves)));
 }
@@ -207,18 +205,8 @@ GraphUptr Graph::FromDotFile(const std::string &filepath) {
     std::system(command.c_str());
   }
 
-  std::cerr << "init: " << edges.front().GetStart().GetLabel() << std::endl;
-
   auto vertices = utils::UmapToValues(std::move(labels_to_vertices));
-
-  std::cerr << "before: " << edges.front().GetStart().GetLabel() << std::endl;
-
-  auto graph = std::make_unique<Graph>(std::move(vertices), std::move(edges));
-
-  std::cerr << "after: " << graph->GetEdges().front().GetStart().GetLabel()
-            << std::endl;
-
-  return graph;
+  return std::make_unique<Graph>(std::move(vertices), std::move(edges));
 }
 
 } // namespace graph

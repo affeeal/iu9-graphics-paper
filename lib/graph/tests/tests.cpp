@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <iostream>
 
 #include <gtest/gtest.h>
 
@@ -35,14 +34,14 @@ TEST(GraphTest, SimpleGraph) {
         std::vector<bezier::Point>{bezier::Point(1, 4), bezier::Point(3, 4)}));
     edges.push_back(Edge(*vertices[0], *vertices[1], std::move(curves)));
   }
-  
+
   {
     bezier::Curves curves;
     curves.push_back(std::make_unique<bezier::Curve>(
         std::vector<bezier::Point>{bezier::Point(1, 1), bezier::Point(3, 1)}));
     edges.push_back(Edge(*vertices[2], *vertices[3], std::move(curves)));
   }
-  
+
   {
     bezier::Curves curves;
     curves.push_back(std::make_unique<bezier::Curve>(
@@ -180,27 +179,6 @@ TEST(GraphTest, TinyFromFile) {
 
   const auto &edges = graph->GetEdges();
   EXPECT_EQ(edges.size(), 4);
-
-  for (const auto &edge : edges) {
-    const auto &start = edge.GetStart();
-    const auto &end = edge.GetEnd();
-    const auto &curves = edge.GetCurves();
-
-    std::cerr << "start: " << start.GetLabel() << ", " << start.GetX() << ", "
-              << start.GetY() << std::endl;
-
-    std::cerr << "end: " << end.GetLabel() << ", " << end.GetX() << ", "
-              << end.GetY() << std::endl;
-
-    std::cerr << "curves: " << curves.size() << std::endl;
-    for (const auto &curve : curves) {
-      for (const auto &point : curve->GetPoints()) {
-        std::cerr << '(' << point.x << ", " << point.y << ") ";
-      }
-
-      std::cerr << std::endl;
-    }
-  }
 
   for (const auto &expected_edge : expected_edges) {
     EXPECT_NE(std::find(edges.begin(), edges.end(), expected_edge),
