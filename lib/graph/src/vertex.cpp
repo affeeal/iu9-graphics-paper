@@ -1,7 +1,5 @@
 #include "vertex.hpp"
 
-#include "utils.hpp"
-
 namespace graph {
 
 Vertex::Vertex(double x, double y, const std::string &label)

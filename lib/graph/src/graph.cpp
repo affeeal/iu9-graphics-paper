@@ -5,11 +5,7 @@
 #include <sstream>
 #include <unordered_map>
 
-#include "curve.hpp"
-#include "edge.hpp"
-#include "point.hpp"
 #include "utils.hpp"
-#include "vertex.hpp"
 
 namespace graph {
 
@@ -30,10 +26,9 @@ constexpr char kDrawCommandEnd = ';';
 
 constexpr std::size_t kCurveSize = 4;
 
-// TODO: optimize
 std::vector<std::string> GetNodes(std::string &&command) {
   std::vector<std::string> nodes;
-  std::stringstream ss(std::move(command));
+  std::stringstream ss(command);
 
   while (true) {
     while (!ss.eof() && ss.get() != kNodeStart) {
@@ -99,16 +94,16 @@ std::pair<double, double> NodeToPoint(std::string &&node) {
 void HandleNodeCommand(std::string &&command,
                        LabelToVertex &labels_to_vertices) {
   auto nodes = GetNodes(std::move(command));
-  assert(nodes.size() == 2); // label and coordinates
+  assert(nodes.size() == 2); // label and appropriate coordinates
 
   const auto coordinates = NodeToPoint(std::move(nodes.back()));
-
   labels_to_vertices[nodes.front()] = std::make_unique<Vertex>(
       coordinates.first, coordinates.second, nodes.front());
 }
 
-std::vector<bezier::Point> GetPoints(std::vector<std::string> &&nodes,
-                                     const LabelToVertex &labels_to_vertices) {
+std::vector<bezier::Point>
+NodesToPoints(std::vector<std::string> &&nodes,
+              const LabelToVertex &labels_to_vertices) {
   std::vector<bezier::Point> points;
   points.reserve(nodes.size());
 
@@ -125,8 +120,9 @@ std::vector<bezier::Point> GetPoints(std::vector<std::string> &&nodes,
   return points;
 }
 
-bezier::Curves GetCurves(std::vector<bezier::Point> &&points) {
-  bezier::Curves curves;
+std::vector<bezier::CurveUptr>
+CurvesByPoints(std::vector<bezier::Point> &&points) {
+  std::vector<bezier::CurveUptr> curves;
   curves.reserve((points.size() + 1) / kCurveSize);
 
   for (auto i = 0; i < curves.capacity(); i++) {
@@ -144,7 +140,7 @@ bezier::Curves GetCurves(std::vector<bezier::Point> &&points) {
   return curves;
 }
 
-void HandleDrawCommand(std::string &&command, std::vector<Edge> &edges,
+void HandleDrawCommand(std::string &&command, std::vector<EdgeUptr> &edges,
                        const LabelToVertex &labels_to_vertices) {
   auto nodes = GetNodes(std::move(command));
 
@@ -152,13 +148,13 @@ void HandleDrawCommand(std::string &&command, std::vector<Edge> &edges,
          nodes.size() > kCurveSize &&
              nodes.size() % kCurveSize == kCurveSize - 1);
 
-  const auto &start = labels_to_vertices.at(nodes.front());
-  const auto &end = labels_to_vertices.at(nodes.back());
+  const auto &start = *labels_to_vertices.at(nodes.front());
+  const auto &end = *labels_to_vertices.at(nodes.back());
 
-  auto points = GetPoints(std::move(nodes), labels_to_vertices);
-  auto edge_curves = GetCurves(std::move(points));
+  auto points = NodesToPoints(std::move(nodes), labels_to_vertices);
+  auto curves = CurvesByPoints(std::move(points));
 
-  edges.push_back(Edge(*start, *end, std::move(edge_curves)));
+  edges.push_back(std::make_unique<Edge>(start, end, std::move(curves)));
 }
 
 } // namespace
@@ -187,9 +183,8 @@ GraphUptr Graph::FromDotFile(const std::string &filepath) {
   }
 
   LabelToVertex labels_to_vertices;
-  std::vector<Edge> edges;
+  std::vector<EdgeUptr> edges;
 
-  // TODO: split
   while (std::getline(tex_file, line)) {
     if (line.find(kNodeCommandStart) != std::string::npos) {
       HandleNodeCommand(std::move(line), labels_to_vertices);
@@ -201,11 +196,11 @@ GraphUptr Graph::FromDotFile(const std::string &filepath) {
   }
 
   {
-    const auto command = "rm " + std::move(filepath + ".tex");
+    const auto command = "rm " + filepath + ".tex";
     std::system(command.c_str());
   }
 
-  auto vertices = utils::UmapToValues(std::move(labels_to_vertices));
+  auto vertices = utils::UnorderedMapToValues(std::move(labels_to_vertices));
   return std::make_unique<Graph>(std::move(vertices), std::move(edges));
 }
 

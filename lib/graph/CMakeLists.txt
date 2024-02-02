@@ -7,7 +7,7 @@ file(GLOB SOURCES ${SOURCE_DIR}/*.cpp)
 
 add_library(${MODULE_NAME} STATIC ${SOURCES})
 target_include_directories(${MODULE_NAME} PUBLIC ${INCLUDE_DIR})
-target_link_libraries(${MODULE_NAME} PUBLIC bezier)
+target_link_libraries(${MODULE_NAME} PUBLIC bezier utils)
 
 if(BUILD_TESTS)
   add_subdirectory(tests)

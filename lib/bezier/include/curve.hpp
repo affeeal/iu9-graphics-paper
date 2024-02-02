@@ -1,6 +1,5 @@
 #pragma once
 
-#include <memory>
 #include <vector>
 
 #include "point.hpp"
@@ -10,41 +9,30 @@ namespace bezier {
 
 extern const double kThreshold;
 
-class ICurve;
+class Curve;
 
-using ICurveUptr = std::unique_ptr<ICurve>;
-using Curves = std::vector<bezier::ICurveUptr>;
+using CurveUptr = std::unique_ptr<Curve>;
 
-class ICurve {
-public:
-  virtual IRectangleUptr CalculateBoundingBox() const = 0;
-  virtual std::pair<ICurveUptr, ICurveUptr> Split(const double t) const = 0;
-  virtual bool IsIntersect(const ICurve &other,
-                           const double threshold = kThreshold) const = 0;
-
-  virtual const std::vector<Point> &GetPoints() const = 0;
-
-  virtual ~ICurve(){};
-};
-
-class Curve : public ICurve {
+class Curve {
 public:
   Curve() = delete;
   explicit Curve(std::vector<Point> &&points);
 
-  IRectangleUptr CalculateBoundingBox() const override;
-  std::pair<ICurveUptr, ICurveUptr> Split(const double t) const override;
-  bool IsIntersect(const ICurve &other,
-                   const double threshold = kThreshold) const override;
+  RectangleUptr CalculateBoundingBox() const;
+  std::pair<CurveUptr, CurveUptr> Split(const double t) const;
+  bool IsIntersect(const Curve &other,
+                   const double threshold = kThreshold) const;
 
-  const std::vector<Point> &GetPoints() const override { return points_; }
+  bool operator==(const Curve &other) const;
+
+  const std::vector<Point> &GetPoints() const { return points_; }
 
 private:
-  void SplitDeCasteljau(std::vector<Point> &left_curve_points,
-                        std::vector<Point> &right_curve_points,
+  void SplitDeCasteljau(std::vector<Point> &first_curve_points,
+                        std::vector<Point> &second_curve_points,
                         const std::vector<Point> &points, const double t) const;
 
-  bool AreIntersect(const ICurve &first, const ICurve &second,
+  bool AreIntersect(const Curve &first, const Curve &second,
                     const double threshold) const;
 
   std::vector<Point> points_;

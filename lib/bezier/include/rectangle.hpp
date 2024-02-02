@@ -6,29 +6,20 @@
 
 namespace bezier {
 
-class IRectangle {
-public:
-  virtual double CalculateArea() const = 0;
-  virtual bool IsOverlap(const IRectangle &other) const = 0;
+class Rectangle;
 
-  virtual const Point &GetTopLeft() const = 0;
-  virtual const Point &GetBottomRight() const = 0;
+using RectangleUptr = std::unique_ptr<Rectangle>;
 
-  virtual ~IRectangle(){};
-};
-
-using IRectangleUptr = std::unique_ptr<IRectangle>;
-
-class Rectangle : public IRectangle {
+class Rectangle {
 public:
   Rectangle() = delete;
-  explicit Rectangle(Point &&top_left, Point &&bottom_right);
+  Rectangle(Point top_left, Point bottom_right);
 
-  double CalculateArea() const override;
-  bool IsOverlap(const IRectangle &other) const override;
+  double CalculateArea() const;
+  bool IsOverlap(const Rectangle &other) const;
 
-  const Point &GetTopLeft() const override { return top_left_; }
-  const Point &GetBottomRight() const override { return bottom_right_; }
+  const Point &GetTopLeft() const { return top_left_; }
+  const Point &GetBottomRight() const { return bottom_right_; }
 
 private:
   Point top_left_;

@@ -1,9 +1,10 @@
 #include "edge.hpp"
 
-#include "curve.hpp"
-#include "vertex.hpp"
-
 namespace graph {
+
+Edge::Edge(const Vertex &start, const Vertex &end,
+           std::vector<bezier::CurveUptr> &&curves)
+    : start_(start), end_(end), curves_(std::move(curves)) {}
 
 bool Edge::IsIntersect(const Edge &other) const {
   for (const auto &curve : curves_) {
