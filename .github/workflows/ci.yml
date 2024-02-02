@@ -26,7 +26,7 @@ jobs:
 
         # TODO: split formating and testing
       - name: Format
-        run: clang-format -i {src,lib}/**/*.[ch]pp
+        run: clang-format -i ${{github.workspace}}/{src,lib}/**/*.[ch]pp
       
       - name: Test
         working-directory: ${{github.workspace}}/build
