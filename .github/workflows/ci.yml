@@ -18,16 +18,16 @@ jobs:
       - name: Install dependencies
         run: sudo apt install -y libgtest-dev libgmock-dev dot2tex clang-format
 
+        # TODO: split formating and testing
+      - name: Format
+        run: clang-format -i ${{github.workspace}}/**/*.[ch]pp
+      
       - name: Configure CMake
         run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
       - name: Build
         run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
 
-        # TODO: split formating and testing
-      - name: Format
-        run: clang-format -i ${{github.workspace}}/{src,lib}/**/*.[ch]pp
-      
       - name: Test
         working-directory: ${{github.workspace}}/build
         run: ctest -C ${{env.BUILD_TYPE}}
