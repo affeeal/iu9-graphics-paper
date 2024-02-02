@@ -3,9 +3,6 @@
 #include <cassert>
 #include <limits>
 
-#include "point.hpp"
-#include "rectangle.hpp"
-
 namespace bezier {
 
 static constexpr auto kCurveCenterT = 0.5;
@@ -14,82 +11,85 @@ Curve::Curve(std::vector<Point> &&points) : points_(std::move(points)) {
   assert(points_.size() >= 2);
 }
 
-IRectangleUptr Curve::CalculateBoundingBox() const {
-  auto leftmost = std::numeric_limits<double>::max();
-  auto topmost = std::numeric_limits<double>::min();
-  auto rightmost = std::numeric_limits<double>::min();
-  auto bottommost = std::numeric_limits<double>::max();
+RectangleUptr Curve::CalculateBoundingBox() const {
+  auto leftmost_x = std::numeric_limits<double>::max();
+  auto topmost_y = std::numeric_limits<double>::min();
+  auto rightmost_x = std::numeric_limits<double>::min();
+  auto bottommost_y = std::numeric_limits<double>::max();
 
   for (const auto &point : points_) {
-    if (point.x < leftmost) {
-      leftmost = point.x;
+    if (point.GetX() < leftmost_x) {
+      leftmost_x = point.GetX();
     }
 
-    if (point.y > topmost) {
-      topmost = point.y;
+    if (point.GetY() > topmost_y) {
+      topmost_y = point.GetY();
     }
 
-    if (point.x > rightmost) {
-      rightmost = point.x;
+    if (point.GetX() > rightmost_x) {
+      rightmost_x = point.GetX();
     }
 
-    if (point.y < bottommost) {
-      bottommost = point.y;
+    if (point.GetY() < bottommost_y) {
+      bottommost_y = point.GetY();
     }
   }
 
-  return std::make_unique<Rectangle>(Point(leftmost, topmost),
-                                     Point(rightmost, bottommost));
+  return std::make_unique<Rectangle>(Point(leftmost_x, topmost_y),
+                                     Point(rightmost_x, bottommost_y));
 }
 
-std::pair<ICurveUptr, ICurveUptr> Curve::Split(const double t) const {
-  std::vector<Point> left_curve_points, right_curve_points;
-  left_curve_points.reserve(points_.size());
-  right_curve_points.reserve(points_.size());
+std::pair<CurveUptr, CurveUptr> Curve::Split(const double t) const {
+  std::vector<Point> first_curve_points;
+  first_curve_points.reserve(points_.size());
 
-  SplitDeCasteljau(left_curve_points, right_curve_points, points_, t);
+  std::vector<Point> second_curve_points;
+  second_curve_points.reserve(points_.size());
 
-  assert(left_curve_points.size() == points_.size());
-  assert(right_curve_points.size() == points_.size());
+  SplitDeCasteljau(first_curve_points, second_curve_points, points_, t);
 
-  return std::make_pair(std::make_unique<Curve>(std::move(left_curve_points)),
-                        std::make_unique<Curve>(std::move(right_curve_points)));
+  assert(first_curve_points.size() == points_.size());
+  assert(second_curve_points.size() == points_.size());
+
+  return std::make_pair(
+      std::make_unique<Curve>(std::move(first_curve_points)),
+      std::make_unique<Curve>(std::move(second_curve_points)));
 }
 
-void Curve::SplitDeCasteljau(std::vector<Point> &left_curve_points,
-                             std::vector<Point> &right_curve_points,
+void Curve::SplitDeCasteljau(std::vector<Point> &first_curve_points,
+                             std::vector<Point> &second_curve_points,
                              const std::vector<Point> &points,
                              const double t) const {
   if (points.size() == 1) {
-    left_curve_points.push_back(points[0]);
-    right_curve_points.push_back(points[0]);
+    first_curve_points.push_back(points.front());
+    second_curve_points.push_back(points.front());
     return;
   }
 
-  const std::size_t new_size = points.size() - 1;
+  const auto new_size = points.size() - 1;
   std::vector<Point> new_points;
   new_points.reserve(new_size);
 
   for (auto i = 0; i < new_size; i++) {
     if (i == 0) {
-      left_curve_points.push_back(points[i]);
+      first_curve_points.push_back(points[i]);
     }
 
     if (i == new_size - 1) {
-      right_curve_points.push_back(points[i + 1]);
+      second_curve_points.push_back(points[i + 1]);
     }
 
     new_points.push_back(points[i] * (1 - t) + points[i + 1] * t);
   }
 
-  SplitDeCasteljau(left_curve_points, right_curve_points, new_points, t);
+  SplitDeCasteljau(first_curve_points, second_curve_points, new_points, t);
 }
 
-bool Curve::IsIntersect(const ICurve &other, const double threshold) const {
+bool Curve::IsIntersect(const Curve &other, const double threshold) const {
   return AreIntersect(*this, other, threshold);
 }
 
-bool Curve::AreIntersect(const ICurve &first, const ICurve &second,
+bool Curve::AreIntersect(const Curve &first, const Curve &second,
                          const double threshold) const {
   const auto first_box = first.CalculateBoundingBox();
   const auto second_box = second.CalculateBoundingBox();
@@ -118,6 +118,10 @@ bool Curve::AreIntersect(const ICurve &first, const ICurve &second,
          AreIntersect(*first_split.first, *second_split.second, threshold) ||
          AreIntersect(*first_split.second, *second_split.first, threshold) ||
          AreIntersect(*first_split.second, *second_split.second, threshold);
+}
+
+bool Curve::operator==(const Curve &other) const {
+  return points_ == other.GetPoints();
 }
 
 } // namespace bezier

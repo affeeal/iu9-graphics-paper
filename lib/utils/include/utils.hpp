@@ -9,7 +9,7 @@ namespace utils {
 std::string GetFileDirectory(const std::string &filename);
 
 template <typename Key, typename Value>
-std::vector<Value> UmapToValues(std::unordered_map<Key, Value> &&um) {
+std::vector<Value> UnorderedMapToValues(std::unordered_map<Key, Value> &&um) {
   std::vector<Value> values;
   values.reserve(um.size());
 

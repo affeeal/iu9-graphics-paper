@@ -4,21 +4,22 @@
 
 namespace bezier {
 
-Rectangle::Rectangle(Point &&top_left, Point &&bottom_right)
+Rectangle::Rectangle(Point top_left, Point bottom_right)
     : top_left_(std::move(top_left)), bottom_right_(std::move(bottom_right)) {
-  assert(top_left_.y >= bottom_right_.y && bottom_right_.y >= 0);
-  assert(bottom_right_.x >= top_left_.x && top_left_.x >= 0);
+  assert(top_left_.GetY() >= bottom_right_.GetY() && bottom_right_.GetY() >= 0);
+  assert(bottom_right_.GetX() >= top_left_.GetX() && top_left_.GetX() >= 0);
 }
 
 double Rectangle::CalculateArea() const {
-  return (bottom_right_.x - top_left_.x) * (top_left_.y - bottom_right_.y);
+  return (bottom_right_.GetX() - top_left_.GetX()) *
+         (top_left_.GetY() - bottom_right_.GetY());
 }
 
-bool Rectangle::IsOverlap(const IRectangle &other) const {
-  return top_left_.y >= other.GetBottomRight().y &&
-         bottom_right_.y <= other.GetTopLeft().y &&
-         top_left_.x <= other.GetBottomRight().x &&
-         bottom_right_.x >= other.GetTopLeft().x;
+bool Rectangle::IsOverlap(const Rectangle &other) const {
+  return top_left_.GetY() >= other.GetBottomRight().GetY() &&
+         bottom_right_.GetY() <= other.GetTopLeft().GetY() &&
+         top_left_.GetX() <= other.GetBottomRight().GetX() &&
+         bottom_right_.GetX() >= other.GetTopLeft().GetX();
 }
 
 } // namespace bezier

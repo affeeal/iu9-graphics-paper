@@ -1,18 +1,19 @@
 #pragma once
 
-#include <memory>
-#include <vector>
-
 #include "curve.hpp"
 #include "vertex.hpp"
 
 namespace graph {
 
+class Edge;
+
+using EdgeUptr = std::unique_ptr<Edge>;
+
 class Edge {
 public:
   Edge() = delete;
-  Edge(const Vertex &start, const Vertex &end, bezier::Curves &&curves)
-      : start_(start), end_(end), curves_(std::move(curves)) {}
+  Edge(const Vertex &start, const Vertex &end,
+       std::vector<bezier::CurveUptr> &&curves);
 
   bool IsIntersect(const Edge &other) const;
 
@@ -20,12 +21,12 @@ public:
 
   const Vertex &GetStart() const { return start_; }
   const Vertex &GetEnd() const { return end_; }
-  const bezier::Curves &GetCurves() const { return curves_; }
+  const std::vector<bezier::CurveUptr> &GetCurves() const { return curves_; }
 
 private:
   const Vertex &start_;
   const Vertex &end_;
-  bezier::Curves curves_;
+  std::vector<bezier::CurveUptr> curves_;
 };
 
 } // namespace graph
