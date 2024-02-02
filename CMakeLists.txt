@@ -7,11 +7,9 @@ set(CMAKE_PROJECT_NAME graphics_paper)
 
 project(${CMAKE_PROJECT_NAME})
 
-option(BUILD_TESTS "build tests" ON)
-if(BUILD_TESTS)
-  find_package(GTest REQUIRED)
-  enable_testing()
-endif(BUILD_TESTS)
+find_package(GTest REQUIRED)
+
+enable_testing()
 
 add_subdirectory(lib)
 

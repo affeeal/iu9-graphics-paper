@@ -3,7 +3,7 @@
 all: clean generate build test
 
 generate:
-	cmake -DBUILD_TESTS=ON -S . -B build
+	cmake -S . -B build
 
 build:
 	cmake --build build
