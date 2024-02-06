@@ -7,6 +7,7 @@ namespace graph {
 class Vertex;
 
 using VertexSptr = std::shared_ptr<Vertex>;
+using VertexSptrConst = std::shared_ptr<const Vertex>;
 
 class Vertex {
 public:

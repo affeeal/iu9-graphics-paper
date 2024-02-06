@@ -2,7 +2,7 @@
 
 namespace graph {
 
-Edge::Edge(VertexSptr start, VertexSptr end,
+Edge::Edge(VertexSptrConst start, VertexSptrConst end,
            std::vector<bezier::CurveUptr> &&curves)
     : start_(std::move(start)), end_(std::move(end)),
       curves_(std::move(curves)) {}

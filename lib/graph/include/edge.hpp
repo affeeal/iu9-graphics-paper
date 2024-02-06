@@ -12,20 +12,20 @@ using EdgeSptr = std::shared_ptr<Edge>;
 class Edge {
 public:
   Edge() = delete;
-  Edge(VertexSptr start, VertexSptr end,
+  Edge(VertexSptrConst start, VertexSptrConst end,
        std::vector<bezier::CurveUptr> &&curves);
 
   bool IsIntersect(const Edge &other) const;
 
   bool operator==(const Edge &other) const;
 
-  VertexSptr GetStart() const { return start_; }
-  VertexSptr GetEnd() const { return end_; }
+  VertexSptrConst GetStart() const { return start_; }
+  VertexSptrConst GetEnd() const { return end_; }
   const std::vector<bezier::CurveUptr> &GetCurves() const { return curves_; }
 
 private:
-  VertexSptr start_;
-  VertexSptr end_;
+  VertexSptrConst start_;
+  VertexSptrConst end_;
   std::vector<bezier::CurveUptr> curves_;
 };
 

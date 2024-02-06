@@ -162,7 +162,8 @@ TEST(GraphTest, TinyFromFile) {
     curves.push_back(std::make_unique<bezier::Curve>(std::vector<bezier::Point>{
         bezier::Point(63.0, 108.0), bezier::Point(59.714, 118.69),
         bezier::Point(53.46, 129.15), bezier::Point(27.0, 162.0)}));
-    expected_edges.push_back(std::make_shared<Edge>(expected_vertices[2], expected_vertices[0], std::move(curves)));
+    expected_edges.push_back(std::make_shared<Edge>(
+        expected_vertices[2], expected_vertices[0], std::move(curves)));
   }
 
   const Graph expected_graph(std::move(expected_vertices),
