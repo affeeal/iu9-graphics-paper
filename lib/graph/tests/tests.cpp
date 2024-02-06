@@ -13,15 +13,15 @@ namespace {
 const std::string kDataPathPrefix = "../../../../data/";
 
 TEST(GraphTest, SimpleGraphBuilding) {
-  std::vector<VertexUptr> vertices;
+  std::vector<VertexSptr> vertices;
   vertices.reserve(4);
 
-  vertices.push_back(std::make_unique<Vertex>(1, 4, "a"));
-  vertices.push_back(std::make_unique<Vertex>(3, 4, "b"));
-  vertices.push_back(std::make_unique<Vertex>(1, 1, "c"));
-  vertices.push_back(std::make_unique<Vertex>(3, 1, "d"));
+  vertices.push_back(std::make_shared<Vertex>(1, 4, "a"));
+  vertices.push_back(std::make_shared<Vertex>(3, 4, "b"));
+  vertices.push_back(std::make_shared<Vertex>(1, 1, "c"));
+  vertices.push_back(std::make_shared<Vertex>(3, 1, "d"));
 
-  std::vector<EdgeUptr> edges;
+  std::vector<EdgeSptr> edges;
   edges.reserve(4);
 
   {
@@ -29,7 +29,7 @@ TEST(GraphTest, SimpleGraphBuilding) {
     curves.push_back(std::make_unique<bezier::Curve>(
         std::vector<bezier::Point>{bezier::Point(1, 4), bezier::Point(3, 4)}));
     edges.push_back(
-        std::make_unique<Edge>(*vertices[0], *vertices[1], std::move(curves)));
+        std::make_shared<Edge>(vertices[0], vertices[1], std::move(curves)));
   }
 
   {
@@ -37,7 +37,7 @@ TEST(GraphTest, SimpleGraphBuilding) {
     curves.push_back(std::make_unique<bezier::Curve>(
         std::vector<bezier::Point>{bezier::Point(1, 1), bezier::Point(3, 1)}));
     edges.push_back(
-        std::make_unique<Edge>(*vertices[2], *vertices[3], std::move(curves)));
+        std::make_shared<Edge>(vertices[2], vertices[3], std::move(curves)));
   }
 
   {
@@ -45,7 +45,7 @@ TEST(GraphTest, SimpleGraphBuilding) {
     curves.push_back(std::make_unique<bezier::Curve>(
         std::vector<bezier::Point>{bezier::Point(1, 4), bezier::Point(3, 1)}));
     edges.push_back(
-        std::make_unique<Edge>(*vertices[0], *vertices[3], std::move(curves)));
+        std::make_shared<Edge>(vertices[0], vertices[3], std::move(curves)));
   }
 
   {
@@ -53,7 +53,7 @@ TEST(GraphTest, SimpleGraphBuilding) {
     curves.push_back(std::make_unique<bezier::Curve>(
         std::vector<bezier::Point>{bezier::Point(1, 1), bezier::Point(3, 4)}));
     edges.push_back(
-        std::make_unique<Edge>(*vertices[2], *vertices[1], std::move(curves)));
+        std::make_shared<Edge>(vertices[2], vertices[1], std::move(curves)));
   }
 
   const Graph graph(std::move(vertices), std::move(edges));
@@ -65,17 +65,17 @@ TEST(GraphTest, SimpleGraphBuilding) {
 }
 
 TEST(GraphTest, CurvedGraphBuilding) {
-  std::vector<VertexUptr> vertices;
+  std::vector<VertexSptr> vertices;
   vertices.reserve(6);
 
-  vertices.push_back(std::make_unique<Vertex>(1, 4, "first"));
-  vertices.push_back(std::make_unique<Vertex>(7, 4, "second"));
-  vertices.push_back(std::make_unique<Vertex>(1, 2, "third"));
-  vertices.push_back(std::make_unique<Vertex>(5, 3, "fourth"));
-  vertices.push_back(std::make_unique<Vertex>(2, 1, "fifth"));
-  vertices.push_back(std::make_unique<Vertex>(8, 3, "sixth"));
+  vertices.push_back(std::make_shared<Vertex>(1, 4, "first"));
+  vertices.push_back(std::make_shared<Vertex>(7, 4, "second"));
+  vertices.push_back(std::make_shared<Vertex>(1, 2, "third"));
+  vertices.push_back(std::make_shared<Vertex>(5, 3, "fourth"));
+  vertices.push_back(std::make_shared<Vertex>(2, 1, "fifth"));
+  vertices.push_back(std::make_shared<Vertex>(8, 3, "sixth"));
 
-  std::vector<EdgeUptr> edges;
+  std::vector<EdgeSptr> edges;
   edges.reserve(3);
 
   {
@@ -86,7 +86,7 @@ TEST(GraphTest, CurvedGraphBuilding) {
     curves.push_back(std::make_unique<bezier::Curve>(std::vector<bezier::Point>{
         bezier::Point(3, 4), bezier::Point(5, 1), bezier::Point(7, 4)}));
     edges.push_back(
-        std::make_unique<Edge>(*vertices[0], *vertices[1], std::move(curves)));
+        std::make_shared<Edge>(vertices[0], vertices[1], std::move(curves)));
   }
 
   {
@@ -96,7 +96,7 @@ TEST(GraphTest, CurvedGraphBuilding) {
     curves.push_back(std::make_unique<bezier::Curve>(std::vector<bezier::Point>{
         bezier::Point(5, 5), bezier::Point(6, 4), bezier::Point(5, 3)}));
     edges.push_back(
-        std::make_unique<Edge>(*vertices[2], *vertices[3], std::move(curves)));
+        std::make_shared<Edge>(vertices[2], vertices[3], std::move(curves)));
   }
 
   {
@@ -105,7 +105,7 @@ TEST(GraphTest, CurvedGraphBuilding) {
         std::vector<bezier::Point>{bezier::Point(2, 1), bezier::Point(3, 2),
                                    bezier::Point(7, 2), bezier::Point(8, 3)}));
     edges.push_back(
-        std::make_unique<Edge>(*vertices[4], *vertices[5], std::move(curves)));
+        std::make_shared<Edge>(vertices[4], vertices[5], std::move(curves)));
   }
 
   const Graph graph(std::move(vertices), std::move(edges));
@@ -117,14 +117,14 @@ TEST(GraphTest, CurvedGraphBuilding) {
 }
 
 TEST(GraphTest, TinyFromFile) {
-  std::vector<VertexUptr> expected_vertices;
+  std::vector<VertexSptr> expected_vertices;
   expected_vertices.reserve(3);
 
-  expected_vertices.push_back(std::make_unique<Vertex>(27.0, 162.0, "a"));
-  expected_vertices.push_back(std::make_unique<Vertex>(27.0, 90.0, "b"));
-  expected_vertices.push_back(std::make_unique<Vertex>(54.0, 18.0, "c"));
+  expected_vertices.push_back(std::make_shared<Vertex>(27.0, 162.0, "a"));
+  expected_vertices.push_back(std::make_shared<Vertex>(27.0, 90.0, "b"));
+  expected_vertices.push_back(std::make_shared<Vertex>(54.0, 18.0, "c"));
 
-  std::vector<EdgeUptr> expected_edges;
+  std::vector<EdgeSptr> expected_edges;
   expected_edges.reserve(4);
 
   {
@@ -132,8 +132,8 @@ TEST(GraphTest, TinyFromFile) {
     curves.push_back(std::make_unique<bezier::Curve>(std::vector<bezier::Point>{
         bezier::Point(27.0, 162.0), bezier::Point(20.297, 136.51),
         bezier::Point(20.048, 126.85), bezier::Point(27.0, 90.0)}));
-    expected_edges.push_back(std::make_unique<Edge>(
-        *expected_vertices[0], *expected_vertices[1], std::move(curves)));
+    expected_edges.push_back(std::make_shared<Edge>(
+        expected_vertices[0], expected_vertices[1], std::move(curves)));
   }
 
   {
@@ -141,8 +141,8 @@ TEST(GraphTest, TinyFromFile) {
     curves.push_back(std::make_unique<bezier::Curve>(std::vector<bezier::Point>{
         bezier::Point(27.0, 90.0), bezier::Point(33.714, 115.83),
         bezier::Point(33.948, 125.37), bezier::Point(27.0, 162.0)}));
-    expected_edges.push_back(std::make_unique<Edge>(
-        *expected_vertices[1], *expected_vertices[0], std::move(curves)));
+    expected_edges.push_back(std::make_shared<Edge>(
+        expected_vertices[1], expected_vertices[0], std::move(curves)));
   }
 
   {
@@ -150,8 +150,8 @@ TEST(GraphTest, TinyFromFile) {
     curves.push_back(std::make_unique<bezier::Curve>(std::vector<bezier::Point>{
         bezier::Point(27.0, 90.0), bezier::Point(36.514, 64.335),
         bezier::Point(40.334, 54.431), bezier::Point(54.0, 18.0)}));
-    expected_edges.push_back(std::make_unique<Edge>(
-        *expected_vertices[1], *expected_vertices[2], std::move(curves)));
+    expected_edges.push_back(std::make_shared<Edge>(
+        expected_vertices[1], expected_vertices[2], std::move(curves)));
   }
 
   {
@@ -162,34 +162,15 @@ TEST(GraphTest, TinyFromFile) {
     curves.push_back(std::make_unique<bezier::Curve>(std::vector<bezier::Point>{
         bezier::Point(63.0, 108.0), bezier::Point(59.714, 118.69),
         bezier::Point(53.46, 129.15), bezier::Point(27.0, 162.0)}));
-    expected_edges.push_back(std::make_unique<Edge>(
-        *expected_vertices[2], *expected_vertices[0], std::move(curves)));
+    expected_edges.push_back(std::make_shared<Edge>(expected_vertices[2], expected_vertices[0], std::move(curves)));
   }
+
+  const Graph expected_graph(std::move(expected_vertices),
+                             std::move(expected_edges));
 
   const auto graph = Graph::FromDotFile(kDataPathPrefix + "tiny.dot");
 
-  const auto &vertices = graph->GetVertices();
-  EXPECT_EQ(vertices.size(), expected_vertices.size());
-
-  for (const auto &expected_vertex : expected_vertices) {
-    auto compare = [&](const VertexUptr &vertex) {
-      return *vertex == *expected_vertex;
-    };
-
-    EXPECT_NE(std::find_if(vertices.begin(), vertices.end(), compare),
-              vertices.end());
-  }
-
-  const auto &edges = graph->GetEdges();
-  EXPECT_EQ(edges.size(), expected_edges.size());
-
-  for (const auto &expected_edge : expected_edges) {
-    auto compare = [&](const EdgeUptr &edge) {
-      return *edge == *expected_edge;
-    };
-
-    EXPECT_NE(std::find_if(edges.begin(), edges.end(), compare), edges.end());
-  }
+  EXPECT_TRUE(expected_graph == *graph);
 }
 
 } // namespace

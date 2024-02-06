@@ -121,7 +121,7 @@ bool Curve::AreIntersect(const Curve &first, const Curve &second,
 }
 
 bool Curve::operator==(const Curve &other) const {
-  return points_ == other.GetPoints();
+  return points_ == other.points_;
 }
 
 } // namespace bezier

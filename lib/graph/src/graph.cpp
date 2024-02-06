@@ -1,5 +1,6 @@
 #include "graph.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <fstream>
 #include <sstream>
@@ -11,7 +12,7 @@ namespace graph {
 
 namespace {
 
-using LabelToVertex = std::unordered_map<std::string, VertexUptr>;
+using LabelToVertex = std::unordered_map<std::string, VertexSptr>;
 
 constexpr std::string_view kTikzpictureStart = "\\begin{tikzpicture}";
 constexpr std::string_view kTikzpictureEnd = "\\end{tikzpicture}";
@@ -58,7 +59,7 @@ std::vector<std::string> GetNodes(std::string &&command) {
   return nodes;
 }
 
-std::pair<double, double> NodeToPoint(std::string &&node) {
+std::pair<double, double> NodeToCoordinates(std::string &&node) {
   std::stringstream ss(std::move(node));
 
   std::string x = "";
@@ -96,8 +97,8 @@ void HandleNodeCommand(std::string &&command,
   auto nodes = GetNodes(std::move(command));
   assert(nodes.size() == 2); // label and appropriate coordinates
 
-  const auto coordinates = NodeToPoint(std::move(nodes.back()));
-  labels_to_vertices[nodes.front()] = std::make_unique<Vertex>(
+  const auto coordinates = NodeToCoordinates(std::move(nodes.back()));
+  labels_to_vertices[nodes.front()] = std::make_shared<Vertex>(
       coordinates.first, coordinates.second, nodes.front());
 }
 
@@ -112,7 +113,7 @@ NodesToPoints(std::vector<std::string> &&nodes,
       const auto &vertex = labels_to_vertices.at(std::move(nodes[i]));
       points.push_back(bezier::Point(vertex->GetX(), vertex->GetY()));
     } else {
-      const auto coordinates = NodeToPoint(std::move(nodes[i]));
+      const auto coordinates = NodeToCoordinates(std::move(nodes[i]));
       points.push_back(bezier::Point(coordinates.first, coordinates.second));
     }
   }
@@ -140,7 +141,7 @@ CurvesByPoints(std::vector<bezier::Point> &&points) {
   return curves;
 }
 
-void HandleDrawCommand(std::string &&command, std::vector<EdgeUptr> &edges,
+void HandleDrawCommand(std::string &&command, std::vector<EdgeSptr> &edges,
                        const LabelToVertex &labels_to_vertices) {
   auto nodes = GetNodes(std::move(command));
 
@@ -148,16 +149,44 @@ void HandleDrawCommand(std::string &&command, std::vector<EdgeUptr> &edges,
          nodes.size() > kCurveSize &&
              nodes.size() % kCurveSize == kCurveSize - 1);
 
-  const auto &start = *labels_to_vertices.at(nodes.front());
-  const auto &end = *labels_to_vertices.at(nodes.back());
+  const auto &start = labels_to_vertices.at(nodes.front());
+  const auto &end = labels_to_vertices.at(nodes.back());
 
   auto points = NodesToPoints(std::move(nodes), labels_to_vertices);
   auto curves = CurvesByPoints(std::move(points));
 
-  edges.push_back(std::make_unique<Edge>(start, end, std::move(curves)));
+  edges.push_back(std::make_shared<Edge>(start, end, std::move(curves)));
 }
 
 } // namespace
+
+// NOTE: can be optimized with sorting
+bool Graph::operator==(const Graph &other) const {
+  for (const auto &vertex : vertices_) {
+    auto compare = [&vertex](const VertexSptr &other_vertex) {
+      assert(vertex && other_vertex);
+      return *vertex == *other_vertex;
+    };
+
+    if (std::find_if(other.vertices_.begin(), other.vertices_.end(),
+                     std::move(compare)) == other.vertices_.end()) {
+      return false;
+    }
+  }
+
+  for (const auto &edge : edges_) {
+    auto compare = [&edge](const EdgeSptr &other_edge) {
+      return *edge == *other_edge;
+    };
+
+    if (std::find_if(other.edges_.begin(), other.edges_.end(),
+                     std::move(compare)) == other.edges_.end()) {
+      return false;
+    }
+  }
+
+  return true;
+}
 
 GraphUptr Graph::FromDotFile(const std::string &filepath) {
   {
@@ -183,7 +212,7 @@ GraphUptr Graph::FromDotFile(const std::string &filepath) {
   }
 
   LabelToVertex labels_to_vertices;
-  std::vector<EdgeUptr> edges;
+  std::vector<EdgeSptr> edges;
 
   while (std::getline(tex_file, line)) {
     if (line.find(kNodeCommandStart) != std::string::npos) {
