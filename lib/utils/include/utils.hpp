@@ -20,4 +20,4 @@ std::vector<Value> UnorderedMapToValues(std::unordered_map<Key, Value> &&um) {
   return values;
 }
 
-} // namespace utils
+}  // namespace utils

@@ -14,7 +14,7 @@ class Curve;
 using CurveUptr = std::unique_ptr<Curve>;
 
 class Curve {
-public:
+ public:
   Curve() = delete;
   explicit Curve(std::vector<Point> &&points);
 
@@ -27,7 +27,7 @@ public:
 
   const std::vector<Point> &GetPoints() const { return points_; }
 
-private:
+ private:
   void SplitDeCasteljau(std::vector<Point> &first_curve_points,
                         std::vector<Point> &second_curve_points,
                         const std::vector<Point> &points, const double t) const;
@@ -38,4 +38,4 @@ private:
   std::vector<Point> points_;
 };
 
-} // namespace bezier
+}  // namespace bezier

@@ -11,7 +11,7 @@ using EdgeSptr = std::shared_ptr<Edge>;
 using EdgeSptrConst = std::shared_ptr<const Edge>;
 
 class Edge {
-public:
+ public:
   Edge() = delete;
   Edge(VertexSptrConst start, VertexSptrConst end,
        std::vector<bezier::CurveUptr> &&curves);
@@ -24,10 +24,10 @@ public:
   VertexSptrConst GetEnd() const { return end_; }
   const std::vector<bezier::CurveUptr> &GetCurves() const { return curves_; }
 
-private:
+ private:
   VertexSptrConst start_;
   VertexSptrConst end_;
   std::vector<bezier::CurveUptr> curves_;
 };
 
-} // namespace graph
+}  // namespace graph

@@ -1,6 +1,6 @@
-#include <algorithm>
-
 #include <gtest/gtest.h>
+
+#include <algorithm>
 
 #include "graph.hpp"
 
@@ -174,6 +174,6 @@ TEST(GraphTest, TinyFromFile) {
   EXPECT_TRUE(expected_graph == *graph);
 }
 
-} // namespace
+}  // namespace
 
-} // namespace graph
+}  // namespace graph

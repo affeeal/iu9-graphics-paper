@@ -96,16 +96,15 @@ std::pair<double, double> NodeToCoordinates(std::string &&node) {
 void HandleNodeCommand(std::string &&command,
                        LabelToVertex &labels_to_vertices) {
   auto nodes = GetNodes(std::move(command));
-  assert(nodes.size() == 2); // label and appropriate coordinates
+  assert(nodes.size() == 2);  // label and appropriate coordinates
 
   const auto coordinates = NodeToCoordinates(std::move(nodes.back()));
   labels_to_vertices[nodes.front()] = std::make_shared<Vertex>(
       coordinates.first, coordinates.second, nodes.front());
 }
 
-std::vector<bezier::Point>
-NodesToPoints(std::vector<std::string> &&nodes,
-              const LabelToVertex &labels_to_vertices) {
+std::vector<bezier::Point> NodesToPoints(
+    std::vector<std::string> &&nodes, const LabelToVertex &labels_to_vertices) {
   std::vector<bezier::Point> points;
   points.reserve(nodes.size());
 
@@ -122,8 +121,8 @@ NodesToPoints(std::vector<std::string> &&nodes,
   return points;
 }
 
-std::vector<bezier::CurveUptr>
-CurvesByPoints(std::vector<bezier::Point> &&points) {
+std::vector<bezier::CurveUptr> CurvesByPoints(
+    std::vector<bezier::Point> &&points) {
   std::vector<bezier::CurveUptr> curves;
   curves.reserve((points.size() + 1) / kCurveSize);
 
@@ -159,7 +158,7 @@ void HandleDrawCommand(std::string &&command, std::vector<EdgeSptr> &edges,
   edges.push_back(std::make_shared<Edge>(start, end, std::move(curves)));
 }
 
-} // namespace
+}  // namespace
 
 // NOTE: can be optimized with sorting
 bool Graph::operator==(const Graph &other) const {
@@ -234,8 +233,8 @@ GraphUptr Graph::FromDotFile(const std::string &filepath) {
   return std::make_unique<Graph>(std::move(vertices), std::move(edges));
 }
 
-std::unordered_set<EdgeSptrConst>
-Graph::CheckForKPlanarity(const std::size_t k) const {
+std::unordered_set<EdgeSptrConst> Graph::CheckForKPlanarity(
+    const std::size_t k) const {
   const auto edges_intersections = CalculateEdgeIntersections();
 
   std::unordered_set<EdgeSptrConst> prohibited_edges;
@@ -249,8 +248,8 @@ Graph::CheckForKPlanarity(const std::size_t k) const {
   return prohibited_edges;
 }
 
-std::unordered_set<EdgeSptrConst>
-Graph::CheckForKQuasiPlanarity(const std::size_t k) const {
+std::unordered_set<EdgeSptrConst> Graph::CheckForKQuasiPlanarity(
+    const std::size_t k) const {
   const auto kMinIntersections = k - 1;
 
   auto edges_intersections = CalculateEdgeIntersections();
@@ -285,8 +284,8 @@ Graph::CheckForKQuasiPlanarity(const std::size_t k) const {
   return GetEdgesByIndices(prohibited_edges);
 }
 
-std::unordered_set<EdgeSptrConst>
-Graph::GetEdgesByIndices(const EdgeIndices& indices) const {
+std::unordered_set<EdgeSptrConst> Graph::GetEdgesByIndices(
+    const EdgeIndices &indices) const {
   std::unordered_set<EdgeSptrConst> edges;
   edges.reserve(indices.size());
 
@@ -312,4 +311,4 @@ std::vector<EdgeIndices> Graph::CalculateEdgeIntersections() const {
   return edges_indices;
 }
 
-} // namespace graph
+}  // namespace graph

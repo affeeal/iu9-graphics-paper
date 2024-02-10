@@ -13,6 +13,6 @@ TEST(UtilsTest, GetFileDirectory) {
   EXPECT_EQ(GetFileDirectory("file.dot"), "./");
 }
 
-} // namespace
+}  // namespace
 
-} // namespace utils
+}  // namespace utils

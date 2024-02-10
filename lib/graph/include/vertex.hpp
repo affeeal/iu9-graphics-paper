@@ -10,7 +10,7 @@ using VertexSptr = std::shared_ptr<Vertex>;
 using VertexSptrConst = std::shared_ptr<const Vertex>;
 
 class Vertex {
-public:
+ public:
   Vertex(double x, double y, const std::string &label);
 
   bool operator==(const Vertex &other) const;
@@ -19,10 +19,10 @@ public:
   double GetX() const { return x_; }
   double GetY() const { return y_; }
 
-private:
+ private:
   std::string label_;
   double x_;
   double y_;
 };
 
-} // namespace graph
+}  // namespace graph

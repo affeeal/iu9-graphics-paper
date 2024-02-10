@@ -5,7 +5,7 @@
 namespace bezier {
 
 class Point {
-public:
+ public:
   Point(double x, double y) : x_(std::move(x)), y_(std::move(y)) {}
 
   bool operator==(const Point &other) const;
@@ -15,9 +15,9 @@ public:
   double GetX() const { return x_; }
   double GetY() const { return y_; }
 
-private:
+ private:
   double x_;
   double y_;
 };
 
-} // namespace bezier
+}  // namespace bezier

@@ -11,4 +11,4 @@ std::string GetFileDirectory(const std::string &filename) {
   return (end < 0) ? "./" : filename.substr(0, end + 1);
 }
 
-} // namespace utils
+}  // namespace utils

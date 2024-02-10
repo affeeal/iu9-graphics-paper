@@ -14,4 +14,4 @@ Point Point::operator*(const double number) const {
   return Point(x_ * number, y_ * number);
 }
 
-} // namespace bezier
+}  // namespace bezier

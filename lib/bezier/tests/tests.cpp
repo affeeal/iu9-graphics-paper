@@ -212,6 +212,6 @@ TEST(CurveTest, QuadraticCurvesSeveralIntersections) {
   EXPECT_TRUE(second.IsIntersect(first));
 }
 
-} // namespace
+}  // namespace
 
-} // namespace bezier
+}  // namespace bezier

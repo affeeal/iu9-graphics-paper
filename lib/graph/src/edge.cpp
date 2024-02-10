@@ -4,7 +4,8 @@ namespace graph {
 
 Edge::Edge(VertexSptrConst start, VertexSptrConst end,
            std::vector<bezier::CurveUptr> &&curves)
-    : start_(std::move(start)), end_(std::move(end)),
+    : start_(std::move(start)),
+      end_(std::move(end)),
       curves_(std::move(curves)) {}
 
 bool Edge::IsIntersect(const Edge &other) const {
@@ -34,4 +35,4 @@ bool Edge::operator==(const Edge &other) const {
   return true;
 }
 
-} // namespace graph
+}  // namespace graph

@@ -11,7 +11,7 @@ class Rectangle;
 using RectangleUptr = std::unique_ptr<Rectangle>;
 
 class Rectangle {
-public:
+ public:
   Rectangle() = delete;
   Rectangle(Point top_left, Point bottom_right);
 
@@ -21,9 +21,9 @@ public:
   const Point &GetTopLeft() const { return top_left_; }
   const Point &GetBottomRight() const { return bottom_right_; }
 
-private:
+ private:
   Point top_left_;
   Point bottom_right_;
 };
 
-} // namespace bezier
+}  // namespace bezier

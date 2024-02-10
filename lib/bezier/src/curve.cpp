@@ -124,4 +124,4 @@ bool Curve::operator==(const Curve &other) const {
   return points_ == other.points_;
 }
 
-} // namespace bezier
+}  // namespace bezier

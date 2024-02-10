@@ -9,4 +9,4 @@ bool Vertex::operator==(const Vertex &other) const {
   return x_ == other.x_ && y_ == other.y_ && label_ == other.label_;
 }
 
-} // namespace graph
+}  // namespace graph
