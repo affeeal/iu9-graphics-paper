@@ -6,6 +6,7 @@
 #include <sstream>
 #include <unordered_map>
 
+#include "edge.hpp"
 #include "utils.hpp"
 
 namespace graph {
@@ -231,6 +232,84 @@ GraphUptr Graph::FromDotFile(const std::string &filepath) {
 
   auto vertices = utils::UnorderedMapToValues(std::move(labels_to_vertices));
   return std::make_unique<Graph>(std::move(vertices), std::move(edges));
+}
+
+std::unordered_set<EdgeSptrConst>
+Graph::CheckForKPlanarity(const std::size_t k) const {
+  const auto edges_intersections = CalculateEdgeIntersections();
+
+  std::unordered_set<EdgeSptrConst> prohibited_edges;
+
+  for (auto i = 0; i < edges_.size(); i++) {
+    if (edges_intersections[i].size() > k) {
+      prohibited_edges.insert(edges_[i]);
+    }
+  }
+
+  return prohibited_edges;
+}
+
+std::unordered_set<EdgeSptrConst>
+Graph::CheckForKQuasiPlanarity(const std::size_t k) const {
+  const auto kMinIntersections = k - 1;
+
+  auto edges_intersections = CalculateEdgeIntersections();
+
+  EdgeIndices prohibited_edges;
+
+  for (auto i = 0; i < edges_intersections.size(); i++) {
+    if (edges_intersections[i].size() >= kMinIntersections) {
+      prohibited_edges.insert(i);
+    }
+  }
+
+  for (auto edge_erased = false; edge_erased; edge_erased = false) {
+    if (prohibited_edges.size() < k) {
+      return {};
+    }
+
+    for (const auto edge : prohibited_edges) {
+      for (const auto intersected_edge : edges_intersections[edge]) {
+        if (!prohibited_edges.contains(intersected_edge)) {
+          edges_intersections[edge].erase(intersected_edge);
+        }
+      }
+
+      if (edges_intersections[edge].size() < kMinIntersections) {
+        edge_erased = true;
+        prohibited_edges.erase(edge);
+      }
+    }
+  }
+
+  return GetEdgesByIndices(prohibited_edges);
+}
+
+std::unordered_set<EdgeSptrConst>
+Graph::GetEdgesByIndices(const EdgeIndices& indices) const {
+  std::unordered_set<EdgeSptrConst> edges;
+  edges.reserve(indices.size());
+
+  for (const auto index : indices) {
+    edges.insert(edges_[index]);
+  }
+
+  return edges;
+}
+
+std::vector<EdgeIndices> Graph::CalculateEdgeIntersections() const {
+  std::vector<EdgeIndices> edges_indices(edges_.size());
+
+  for (auto i = 0; i < edges_.size() - 1; i++) {
+    for (auto j = i + i; j < edges_.size(); j++) {
+      if (edges_[i]->IsIntersect(*edges_[j])) {
+        edges_indices[i].insert(j);
+        edges_indices[j].insert(i);
+      }
+    }
+  }
+
+  return edges_indices;
 }
 
 } // namespace graph

@@ -8,6 +8,7 @@ namespace graph {
 class Edge;
 
 using EdgeSptr = std::shared_ptr<Edge>;
+using EdgeSptrConst = std::shared_ptr<const Edge>;
 
 class Edge {
 public:
