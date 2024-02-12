@@ -260,11 +260,10 @@ GraphUptr Graph::FromDotFile(const std::string &filepath) {
   return std::make_unique<Graph>(std::move(vertices), std::move(edges));
 }
 
-std::unordered_set<EdgeSptrConst> Graph::CheckKPlanar(
-    const std::size_t k) const {
+Edges Graph::CheckKPlanar(const std::size_t k) const {
   const auto edges_intersections = CalculateIntersections();
 
-  std::unordered_set<EdgeSptrConst> prohibited_edges;
+  Edges prohibited_edges;
 
   for (auto i = 0; i < edges_.size(); i++) {
     if (edges_intersections[i].size() > k) {
@@ -275,8 +274,7 @@ std::unordered_set<EdgeSptrConst> Graph::CheckKPlanar(
   return prohibited_edges;
 }
 
-std::unordered_set<EdgeSptrConst> Graph::CheckKQuasiPlanar(
-    const std::size_t k) const {
+Edges Graph::CheckKQuasiPlanar(const std::size_t k) const {
   const auto kMinIntersections = k - 1;
 
   auto edges_intersections = CalculateIntersections();
@@ -311,15 +309,15 @@ std::unordered_set<EdgeSptrConst> Graph::CheckKQuasiPlanar(
   return GetEdgesByIndices(prohibited_edges);
 }
 
-std::unordered_set<EdgeSptrConst> Graph::CheckKSkewness(
-    const std::size_t k) const {
+Edges Graph::CheckKSkewness(const std::size_t k) const {
   if (edges_.size() <= 1) {
     return {};
   }
 
-  EdgeIndices edges_to_remove;
   auto intersections = CalculateIntersections();
+  EdgeIndices prohibited_edges;
   auto deletions_left = k;
+
   while (true) {
     auto edge_with_most_intersections = 0;
 
@@ -340,13 +338,11 @@ std::unordered_set<EdgeSptrConst> Graph::CheckKSkewness(
     }
 
     intersections[edge_with_most_intersections].clear();
-    edges_to_remove.insert(edge_with_most_intersections);
+    prohibited_edges.insert(edge_with_most_intersections);
     deletions_left--;
   }
 
-  // TODO: handle deletions_left
-
-  return GetEdgesByIndices(edges_to_remove);
+  return (deletions_left >= 0 ? Edges{} : GetEdgesByIndices(prohibited_edges));
 }
 
 Edges Graph::CheckRAC() const { return CheckACE(std::numbers::pi / 2); }
@@ -388,9 +384,8 @@ Edges Graph::CheckAC(const ACPredicat &is_satisfying_angle) const {
   return GetEdgesByIndices(prohibited_edges);
 }
 
-std::unordered_set<EdgeSptrConst> Graph::GetEdgesByIndices(
-    const EdgeIndices &indices) const {
-  std::unordered_set<EdgeSptrConst> edges;
+Edges Graph::GetEdgesByIndices(const EdgeIndices &indices) const {
+  Edges edges;
   edges.reserve(indices.size());
 
   for (const auto index : indices) {

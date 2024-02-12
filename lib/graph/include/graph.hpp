@@ -77,7 +77,8 @@ class Graph {
    * A skewness-k drawing is such that the removal of at most k edges makes the
    * drawing planar.
    *
-   * @return edges mutually crossed k or more times.
+   * @return edges to remove if drawing is not skewness-k and empty set
+   * otherwise.
    */
   Edges CheckKSkewness(const std::size_t k) const;
 
@@ -119,13 +120,11 @@ class Graph {
   const std::vector<EdgeSptr> &GetEdges() const { return edges_; }
 
  private:
-  std::unordered_set<EdgeSptrConst> CheckAC(
-      const ACPredicat &is_satisfying_angle) const;
+  Edges CheckAC(const ACPredicat &is_satisfying_angle) const;
+  Edges GetEdgesByIndices(const EdgeIndices &indices) const;
   std::vector<EdgeIndices> CalculateIntersections(
       const IntersectionsPuttingDown mode =
           IntersectionsPuttingDown::kSymmetric) const;
-  std::unordered_set<EdgeSptrConst> GetEdgesByIndices(
-      const EdgeIndices &indices) const;
 
   std::vector<VertexSptr> vertices_;
   std::vector<EdgeSptr> edges_;
