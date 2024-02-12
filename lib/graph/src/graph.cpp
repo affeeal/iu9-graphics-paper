@@ -185,11 +185,6 @@ void HandleDrawCommand(std::string &&command, std::vector<EdgeSptr> &edges,
   edges.push_back(std::make_shared<Edge>(start, end, std::move(curves)));
 }
 
-DirectionVector GetDirectionVector(const Edge &edge) {
-  return DirectionVector(end->GetX() - start->GetX(),
-                         end->GetY() - start->GetY());
-}
-
 }  // namespace
 
 // NOTE: can be optimized with sorting
@@ -361,7 +356,7 @@ Edges Graph::CheckACE(const double angle) const {
       [angle](const double other_angle) { return other_angle == angle; });
 }
 
-Edges Graph::CheckACLalpha(const double angle) const {
+Edges Graph::CheckACL(const double angle) const {
   return CheckAC(
       [angle](const double other_angle) { return other_angle >= angle; });
 }
