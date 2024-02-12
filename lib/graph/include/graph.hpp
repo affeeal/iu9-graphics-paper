@@ -32,6 +32,8 @@ class Graph {
       const std::size_t k) const;
   std::unordered_set<EdgeSptrConst> CheckForKQuasiPlanarity(
       const std::size_t k) const;
+  std::unordered_set<EdgeSptrConst> CheckForKSkewness(
+      const std::size_t k) const;
 
   const std::vector<VertexSptr> &GetVertices() const { return vertices_; }
   const std::vector<EdgeSptr> &GetEdges() const { return edges_; }

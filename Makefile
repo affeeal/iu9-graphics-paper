@@ -15,7 +15,7 @@ run:
 	./build/graphics_paper
 
 format:
-	clang-format -i {src,lib}/**/*.[ch]pp
+	clang-format -i --style=Google {src,lib}/**/*.[ch]pp
 
 clean:
 	rm -rf build .cache

@@ -5,6 +5,7 @@
 #include <fstream>
 #include <sstream>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "edge.hpp"
 #include "utils.hpp"
@@ -282,6 +283,44 @@ std::unordered_set<EdgeSptrConst> Graph::CheckForKQuasiPlanarity(
   }
 
   return GetEdgesByIndices(prohibited_edges);
+}
+
+std::unordered_set<EdgeSptrConst> Graph::CheckForKSkewness(
+    const std::size_t k) const {
+  if (edges_.size() <= 1) {
+    return {};
+  }
+
+  EdgeIndices edges_to_remove;
+  auto intersections = CalculateEdgeIntersections();
+  auto deletions_left = k;
+  while (true) {
+    auto edge_with_most_intersections = 0;
+
+    for (auto i = 0; i < intersections.size(); i++) {
+      if (intersections[i].size() >
+          intersections[edge_with_most_intersections].size()) {
+        edge_with_most_intersections = i;
+      }
+    }
+
+    if (intersections[edge_with_most_intersections].size() == 0) {
+      break;
+    }
+
+    for (const auto intersected_edge :
+         intersections[edge_with_most_intersections]) {
+      intersections[intersected_edge].erase(edge_with_most_intersections);
+    }
+
+    intersections[edge_with_most_intersections].clear();
+    edges_to_remove.insert(edge_with_most_intersections);
+    deletions_left--;
+  }
+
+  // TODO: handle deletions_left
+
+  return GetEdgesByIndices(edges_to_remove);
 }
 
 std::unordered_set<EdgeSptrConst> Graph::GetEdgesByIndices(
