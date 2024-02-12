@@ -2,7 +2,9 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <fstream>
+#include <numbers>
 #include <sstream>
 #include <unordered_map>
 #include <unordered_set>
@@ -28,6 +30,30 @@ constexpr char kCoordinatesDivider = ',';
 constexpr char kDrawCommandEnd = ';';
 
 constexpr std::size_t kCurveSize = 4;
+
+DirectionVector::DirectionVector(const Edge &edge) {
+  assert(edge.GetCurves().size() == 1);
+
+  const auto start = edge.GetStart();
+  const auto end = edge.GetEnd();
+
+  x_ = end->GetX() - start->GetX();
+  y_ = end->GetY() - start->GetY();
+}
+
+double DirectionVector::CalculateAngle(const DirectionVector &other) const {
+  return std::acos(std::abs(CalculateScalarProduct(other)) / CalculateNorm() /
+                   other.CalculateNorm());
+}
+
+double DirectionVector::CalculateNorm() const {
+  return std::sqrt(x_ * x_ + y_ * y_);
+}
+
+double DirectionVector::CalculateScalarProduct(
+    const DirectionVector &other) const {
+  return x_ * other.x_ + y_ * other.y_;
+}
 
 std::vector<std::string> GetNodes(std::string &&command) {
   std::vector<std::string> nodes;
@@ -159,6 +185,11 @@ void HandleDrawCommand(std::string &&command, std::vector<EdgeSptr> &edges,
   edges.push_back(std::make_shared<Edge>(start, end, std::move(curves)));
 }
 
+DirectionVector GetDirectionVector(const Edge &edge) {
+  return DirectionVector(end->GetX() - start->GetX(),
+                         end->GetY() - start->GetY());
+}
+
 }  // namespace
 
 // NOTE: can be optimized with sorting
@@ -234,9 +265,9 @@ GraphUptr Graph::FromDotFile(const std::string &filepath) {
   return std::make_unique<Graph>(std::move(vertices), std::move(edges));
 }
 
-std::unordered_set<EdgeSptrConst> Graph::CheckForKPlanarity(
+std::unordered_set<EdgeSptrConst> Graph::CheckKPlanar(
     const std::size_t k) const {
-  const auto edges_intersections = CalculateEdgeIntersections();
+  const auto edges_intersections = CalculateIntersections();
 
   std::unordered_set<EdgeSptrConst> prohibited_edges;
 
@@ -249,11 +280,11 @@ std::unordered_set<EdgeSptrConst> Graph::CheckForKPlanarity(
   return prohibited_edges;
 }
 
-std::unordered_set<EdgeSptrConst> Graph::CheckForKQuasiPlanarity(
+std::unordered_set<EdgeSptrConst> Graph::CheckKQuasiPlanar(
     const std::size_t k) const {
   const auto kMinIntersections = k - 1;
 
-  auto edges_intersections = CalculateEdgeIntersections();
+  auto edges_intersections = CalculateIntersections();
 
   EdgeIndices prohibited_edges;
 
@@ -285,14 +316,14 @@ std::unordered_set<EdgeSptrConst> Graph::CheckForKQuasiPlanarity(
   return GetEdgesByIndices(prohibited_edges);
 }
 
-std::unordered_set<EdgeSptrConst> Graph::CheckForKSkewness(
+std::unordered_set<EdgeSptrConst> Graph::CheckKSkewness(
     const std::size_t k) const {
   if (edges_.size() <= 1) {
     return {};
   }
 
   EdgeIndices edges_to_remove;
-  auto intersections = CalculateEdgeIntersections();
+  auto intersections = CalculateIntersections();
   auto deletions_left = k;
   while (true) {
     auto edge_with_most_intersections = 0;
@@ -323,6 +354,45 @@ std::unordered_set<EdgeSptrConst> Graph::CheckForKSkewness(
   return GetEdgesByIndices(edges_to_remove);
 }
 
+Edges Graph::CheckRAC() const { return CheckACE(std::numbers::pi / 2); }
+
+Edges Graph::CheckACE(const double angle) const {
+  return CheckAC(
+      [angle](const double other_angle) { return other_angle == angle; });
+}
+
+Edges Graph::CheckACLalpha(const double angle) const {
+  return CheckAC(
+      [angle](const double other_angle) { return other_angle >= angle; });
+}
+
+Edges Graph::CheckAC(const ACPredicat &is_satisfying_angle) const {
+  const auto intersections =
+      CalculateIntersections(IntersectionsPuttingDown::kNonSymmetric);
+
+  std::vector<DirectionVector> direction_vectors;
+  direction_vectors.reserve(edges_.size());
+  for (const auto &edge : edges_) {
+    direction_vectors.push_back(DirectionVector(*edge));
+  }
+
+  EdgeIndices prohibited_edges;
+
+  for (auto i = 0; i < intersections.size(); i++) {
+    for (const auto j : intersections[i]) {
+      const auto angle =
+          direction_vectors[i].CalculateAngle(direction_vectors[j]);
+      assert(0 <= angle && angle <= std::numbers::pi / 2);
+      if (!is_satisfying_angle(angle)) {
+        prohibited_edges.insert(i);
+        prohibited_edges.insert(j);
+      }
+    }
+  }
+
+  return GetEdgesByIndices(prohibited_edges);
+}
+
 std::unordered_set<EdgeSptrConst> Graph::GetEdgesByIndices(
     const EdgeIndices &indices) const {
   std::unordered_set<EdgeSptrConst> edges;
@@ -335,14 +405,17 @@ std::unordered_set<EdgeSptrConst> Graph::GetEdgesByIndices(
   return edges;
 }
 
-std::vector<EdgeIndices> Graph::CalculateEdgeIntersections() const {
+std::vector<EdgeIndices> Graph::CalculateIntersections(
+    const IntersectionsPuttingDown mode) const {
   std::vector<EdgeIndices> edges_indices(edges_.size());
 
   for (auto i = 0; i < edges_.size() - 1; i++) {
     for (auto j = i + i; j < edges_.size(); j++) {
       if (edges_[i]->IsIntersect(*edges_[j])) {
         edges_indices[i].insert(j);
-        edges_indices[j].insert(i);
+        if (mode == IntersectionsPuttingDown::kSymmetric) {
+          edges_indices[j].insert(i);
+        }
       }
     }
   }
