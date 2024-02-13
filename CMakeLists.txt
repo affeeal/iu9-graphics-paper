@@ -8,6 +8,7 @@ set(CMAKE_PROJECT_NAME graphics_paper)
 project(${CMAKE_PROJECT_NAME})
 
 find_package(GTest REQUIRED)
+find_package(Boost REQUIRED)
 
 enable_testing()
 
