@@ -1,6 +1,7 @@
 #include "graph.hpp"
 
 #include <algorithm>
+#include <boost/functional/hash.hpp>
 #include <cassert>
 #include <cmath>
 #include <fstream>
@@ -261,53 +262,53 @@ GraphUptr Graph::FromDotFile(const std::string &filepath) {
   return std::make_unique<Graph>(std::move(vertices), std::move(edges));
 }
 
-Edges Graph::CheckKPlanar(const std::size_t k) const {
-  const auto edges_intersections = CalculateIntersections();
+std::vector<EdgeSptrConst> Graph::CheckKPlanar(const std::size_t k) const {
+  const auto intersections = CalculateIntersections();
+  std::vector<EdgeSptrConst> unsatisfying_edges;
 
-  Edges prohibited_edges;
-
-  for (auto i = 0; i < edges_.size(); i++) {
-    if (edges_intersections[i].size() > k) {
-      prohibited_edges.insert(edges_[i]);
+  for (std::size_t i = 0; i < edges_.size(); i++) {
+    if (intersections[i].size() > k) {
+      unsatisfying_edges.push_back(edges_[i]);
     }
   }
 
-  return prohibited_edges;
+  return unsatisfying_edges;
 }
 
-Edges Graph::CheckKQuasiPlanar(const std::size_t k) const {
-  const auto kMinIntersections = k - 1;
+std::vector<EdgeSptrConst> Graph::CheckKQuasiPlanar(const std::size_t k) const {
+  if (k < 3) {
+    throw std::logic_error("Graph::CheckKQuasiPlanar: failed k >= 3");
+  }
 
-  auto edges_intersections = CalculateIntersections();
+  auto intersections = CalculateIntersections();
+  std::unordered_set<std::size_t> unsatisfying_edges;
 
-  EdgeIndices prohibited_edges;
-
-  for (auto i = 0; i < edges_intersections.size(); i++) {
-    if (edges_intersections[i].size() >= kMinIntersections) {
-      prohibited_edges.insert(i);
+  for (std::size_t i = 0; i < intersections.size(); i++) {
+    if (intersections[i].size() >= k - 1) {
+      unsatisfying_edges.insert(i);
     }
   }
 
   for (auto edge_erased = false; edge_erased; edge_erased = false) {
-    if (prohibited_edges.size() < k) {
+    if (unsatisfying_edges.size() < k) {
       return {};
     }
 
-    for (const auto edge : prohibited_edges) {
-      for (const auto intersected_edge : edges_intersections[edge]) {
-        if (!prohibited_edges.contains(intersected_edge)) {
-          edges_intersections[edge].erase(intersected_edge);
+    for (const auto edge : unsatisfying_edges) {
+      for (const auto intersected_edge : intersections[edge]) {
+        if (!unsatisfying_edges.contains(intersected_edge)) {
+          intersections[edge].erase(intersected_edge);
         }
       }
 
-      if (edges_intersections[edge].size() < kMinIntersections) {
+      if (intersections[edge].size() < k - 1) {
         edge_erased = true;
-        prohibited_edges.erase(edge);
+        unsatisfying_edges.erase(edge);
       }
     }
   }
 
-  return GetEdgesByIndices(prohibited_edges);
+  return GetEdgesByIndices(unsatisfying_edges);
 }
 
 Edges Graph::CheckKSkewness(const std::size_t k) const {
@@ -385,12 +386,13 @@ Edges Graph::CheckAC(const ACPredicat &is_satisfying_angle) const {
   return GetEdgesByIndices(prohibited_edges);
 }
 
-Edges Graph::GetEdgesByIndices(const EdgeIndices &indices) const {
-  Edges edges;
+std::vector<EdgeSptrConst> Graph::GetEdgesByIndices(
+    const std::unordered_set<std::size_t> &indices) const {
+  std::vector<EdgeSptrConst> edges;
   edges.reserve(indices.size());
 
   for (const auto index : indices) {
-    edges.insert(edges_[index]);
+    edges.push_back(edges_[index]);
   }
 
   return edges;
@@ -415,38 +417,71 @@ std::vector<Set> Graph::CalculateIntersections(
   return edges_indices;
 }
 
-std::vector<Edges> Graph::CheckGridFree(const std::size_t k,
-                                        const std::size_t l,
-                                        const bool all_sets) const {
+std::vector<KLGrid> Graph::CheckGridFree(const std::size_t k,
+                                         const std::size_t l) const {
   if (k == 0) {
-    throw std::logic_error("k must be at least 1");
+    throw std::logic_error("Graph::CheckGridFree: failed k >= 1");
   }
 
   if (l == 0) {
-    throw std::logic_error("l must be at least 1");
+    throw std::logic_error("Graph::CheckGridFree: failed l >= 1");
   }
 
   const auto intersections = CalculateIntersections<EdgeIndicesOrdered>();
 
-  std::vector<std::size_t> candidates;
-
-  for (auto i = 0; i < intersections.size(); i++) {
+  std::vector<std::size_t> k_groups_candidates;
+  for (std::size_t i = 0; i < intersections.size(); i++) {
     if (intersections[i].size() >= l) {
-      candidates.push_back(i);
+      k_groups_candidates.push_back(i);
     }
   }
 
-  for (auto i = 0; i + k <= candidates.size(); i++) {
-    std::unordered_map<std::string, std::unordered_set<std::size_t>>
-        intersection_to_quantity;
+  std::vector<KLGrid> k_l_grids;
 
-    for (auto j = i + 1; j < candidates.size(); j++) {
+  for (std::size_t i = 0; i + k <= k_groups_candidates.size(); i++) {
+    // actually can store >= k elements in a group
+    std::unordered_map<std::size_t, std::vector<std::size_t>> k_groups;
+    std::unordered_map<std::size_t, std::vector<std::size_t>> l_groups;
+
+    for (std::size_t j = i + 1; j < k_groups_candidates.size(); j++) {
       const auto intersection =
-          utils::IntersectSets(intersections[i], intersections[j]);
+          utils::Intersect(intersections[i], intersections[j]);
+
+      if (intersection.size() < l) {
+        continue;
+      }
+
+      for (const auto &l_combination : utils::Combinations(intersection, l)) {
+        const auto hash =
+            boost::hash_range(l_combination.begin(), l_combination.end());
+
+        if (!l_groups.contains(hash)) {
+          l_groups[hash] = l_combination;
+        }
+
+        if (!k_groups.contains(hash)) {
+          k_groups[hash] = {i, j};
+        } else {
+          k_groups[hash].push_back(j);
+        }
+      }
+
+      for (const auto &[hash, k_group] : k_groups) {
+        if (k_group.size() < k) {
+          continue;
+        }
+
+        assert(l_groups.contains(hash));
+        const auto l_group = GetEdgesByIndices(l_groups.at(hash));
+
+        for (const auto &k_combination : utils::Combinations(k_group, k)) {
+          k_l_grids.emplace_back(GetEdgesByIndices(k_combination), l_group);
+        }
+      }
     }
   }
 
-  return {};
+  return k_l_grids;
 }
 
 }  // namespace graph

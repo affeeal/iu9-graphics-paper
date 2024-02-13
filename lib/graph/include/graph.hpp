@@ -1,7 +1,6 @@
 #pragma once
 
 #include <functional>
-#include <set>
 #include <unordered_set>
 
 #include "edge.hpp"
@@ -10,11 +9,6 @@ namespace graph {
 
 namespace {
 
-using EdgeIndicesOrdered = std::set<std::size_t>;
-using EdgeIndicesUnordered = std::unordered_set<std::size_t>;
-
-using Edges = std::unordered_set<EdgeSptrConst>;
-using EdgeIndices = std::unordered_set<std::size_t>;
 using ACPredicat = std::function<bool(const double other_angle)>;
 
 enum class IntersectionsPuttingDown {
@@ -42,6 +36,7 @@ class DirectionVector {
 }  // namespace
 
 class Graph;
+class KLGrid;
 
 using GraphUptr = std::unique_ptr<Graph>;
 
@@ -64,7 +59,7 @@ class Graph {
    *
    * @return edges crossed k or more times.
    */
-  Edges CheckKPlanar(const std::size_t k) const;
+  std::vector<EdgeSptrConst> CheckKPlanar(const std::size_t k) const;
 
   /**
    * Check if the drawing belongs to the k-quasi-planar class.
@@ -73,7 +68,7 @@ class Graph {
    *
    * @return edges mutually crossed k or more times.
    */
-  Edges CheckKQuasiPlanar(const std::size_t k) const;
+  std::vector<EdgeSptrConst> CheckKQuasiPlanar(const std::size_t k) const;
 
   /**
    * Check if the drawing belongs to the skewness-k class.
@@ -84,7 +79,7 @@ class Graph {
    * @return edges to remove if drawing is not skewness-k and empty set
    * otherwise.
    */
-  Edges CheckKSkewness(const std::size_t k) const;
+  std::unordered_set<EdgeSptrConst> CheckKSkewness(const std::size_t k) const;
 
   /**
    * Check if the drawing belongs to the RAC class.
@@ -96,7 +91,7 @@ class Graph {
    * @param alpha An angle in the range [0, pi / 2].
    * @return edges that intersect at a different angle.
    */
-  Edges CheckRAC() const;
+  std::unordered_set<EdgeSptrConst> CheckRAC() const;
 
   /**
    * Check if the drawing belongs to the ACE-alpha class.
@@ -107,7 +102,7 @@ class Graph {
    * @param alpha An angle in the range [0, pi / 2].
    * @return edges that intersect at a different angle.
    */
-  Edges CheckACE(const double alpha) const;
+  std::unordered_set<EdgeSptrConst> CheckACE(const double alpha) const;
 
   /**
    * Check if the drawing belongs to the ACL-alpha class.
@@ -118,25 +113,35 @@ class Graph {
    * @param alpha An angle in the range [0, pi / 2].
    * @return edges that intersect at an angle less than alpha.
    */
-  Edges CheckACL(const double alpha) const;
+  std::unordered_set<EdgeSptrConst> CheckACL(const double alpha) const;
 
-  std::vector<Edges> CheckGridFree(const std::size_t k, const std::size_t l,
-                                   const bool all_sets = true) const;
+  std::vector<KLGrid> CheckGridFree(const std::size_t k,
+                                    const std::size_t l) const;
 
   const std::vector<VertexSptr> &GetVertices() const { return vertices_; }
   const std::vector<EdgeSptr> &GetEdges() const { return edges_; }
 
  private:
-  Edges CheckAC(const ACPredicat &is_satisfying_angle) const;
-  Edges GetEdgesByIndices(const EdgeIndices &indices) const;
-
-  template <typename Set = EdgeIndicesUnordered>
+  template <typename Set = std::unordered_set<std::size_t>>
   std::vector<Set> CalculateIntersections(
       const IntersectionsPuttingDown mode =
           IntersectionsPuttingDown::kSymmetric) const;
+  std::vector<EdgeSptrConst> GetEdgesByIndices(
+      const std::unordered_set<std::size_t> &indices) const;
+  std::unordered_set<EdgeSptrConst> CheckAC(
+      const ACPredicat &is_satisfying_angle) const;
 
   std::vector<VertexSptr> vertices_;
   std::vector<EdgeSptr> edges_;
+};
+
+struct KLGrid {
+  std::vector<EdgeSptrConst> k_group;
+  std::vector<EdgeSptrConst> l_group;
+
+  KLGrid(const std::vector<EdgeSptrConst> &k_group,
+         const std::vector<EdgeSptrConst> &l_group)
+      : k_group(k_group), l_group(l_group) {}
 };
 
 }  // namespace graph

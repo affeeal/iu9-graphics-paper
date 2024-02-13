@@ -1,6 +1,5 @@
 #pragma once
 
-#include <boost/functional/hash.hpp>
 #include <set>
 #include <stdexcept>
 #include <string>
@@ -15,11 +14,8 @@ std::size_t Factorial(const std::size_t n);
 
 template <typename Value>
 std::vector<std::vector<Value>> Combinations(const std::vector<Value> &values,
-                                             const std::size_t n,
                                              const std::size_t k) {
-  if (n != values.size()) {
-    throw std::logic_error("N must be equal to the values' size");
-  }
+  const auto n = values.size();
 
   if (n < k) {
     throw std::logic_error("N must be greater or equal to K");
@@ -48,13 +44,8 @@ std::vector<std::vector<Value>> Combinations(const std::vector<Value> &values,
 }
 
 template <typename Value>
-std::size_t HashSet(const std::set<Value> &s) {
-  return boost::hash_range(s.begin(), s.end());
-}
-
-template <typename Value>
-std::vector<Value> IntersectSets(const std::set<Value> &s1,
-                                 const std::set<Value> &s2) {
+std::vector<Value> Intersect(const std::set<Value> &s1,
+                             const std::set<Value> &s2) {
   std::vector<Value> intersection;
 
   auto i1 = s1.begin();

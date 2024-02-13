@@ -20,47 +20,34 @@ TEST(UtilsTest, GetFileDirectory) {
 }
 
 TEST(UtilsTest, GetIntersection) {
-  EXPECT_THAT(IntersectSets<std::size_t>({}, {}), testing::ElementsAre());
+  EXPECT_THAT(Intersect<std::size_t>({}, {}), testing::ElementsAre());
 
-  EXPECT_THAT(IntersectSets<std::size_t>({1, 2}, {}), testing::ElementsAre());
+  EXPECT_THAT(Intersect<std::size_t>({1, 2}, {}), testing::ElementsAre());
 
-  EXPECT_THAT(IntersectSets<std::size_t>({1, 2}, {3, 4, 5}),
+  EXPECT_THAT(Intersect<std::size_t>({1, 2}, {3, 4, 5}),
               testing::ElementsAre());
 
-  EXPECT_THAT(IntersectSets<std::size_t>({1, 3, 5, 6}, {2, 4}),
+  EXPECT_THAT(Intersect<std::size_t>({1, 3, 5, 6}, {2, 4}),
               testing::ElementsAre());
 
-  EXPECT_THAT(IntersectSets<std::size_t>({1, 3, 4, 6}, {2, 4, 5}),
+  EXPECT_THAT(Intersect<std::size_t>({1, 3, 4, 6}, {2, 4, 5}),
               testing::ElementsAre(4));
 
-  EXPECT_THAT(IntersectSets<std::size_t>({1, 2, 4}, {2, 3, 4, 5}),
+  EXPECT_THAT(Intersect<std::size_t>({1, 2, 4}, {2, 3, 4, 5}),
               testing::ElementsAre(2, 4));
 
-  EXPECT_THAT(IntersectSets<std::size_t>({1, 2, 4, 5, 6}, {2, 3, 4, 5}),
+  EXPECT_THAT(Intersect<std::size_t>({1, 2, 4, 5, 6}, {2, 3, 4, 5}),
               testing::ElementsAre(2, 4, 5));
 
-  EXPECT_THAT(IntersectSets<std::size_t>({1, 2, 3}, {1, 2, 3}),
+  EXPECT_THAT(Intersect<std::size_t>({1, 2, 3}, {1, 2, 3}),
               testing::ElementsAre(1, 2, 3));
 }
 
-TEST(UtilsTest, HashSet) {
-  EXPECT_NE(HashSet(std::set<std::size_t>{}),
-            HashSet(std::set<std::size_t>{1}));
-
-  EXPECT_EQ(HashSet(std::set<std::size_t>{1}),
-            HashSet(std::set<std::size_t>{1}));
-
-  EXPECT_EQ(HashSet(std::set<std::size_t>{1, 2}),
-            HashSet(std::set<std::size_t>{1, 2}));
-}
-
 TEST(UtilsTest, Combinations) {
-  EXPECT_ANY_THROW(Combinations(std::vector<std::size_t>{}, 5, 3));
-
-  EXPECT_ANY_THROW(Combinations(std::vector<std::size_t>{0}, 1, 2));
+  EXPECT_ANY_THROW(Combinations(std::vector<std::size_t>{0}, 2));
 
   {
-    const auto result = Combinations(std::vector<std::size_t>{0, 1, 2}, 3, 3);
+    const auto result = Combinations(std::vector<std::size_t>{0, 1, 2}, 3);
 
     ASSERT_EQ(result.size(), 1);
 
@@ -68,8 +55,7 @@ TEST(UtilsTest, Combinations) {
   }
 
   {
-    const auto result =
-        Combinations(std::vector<std::size_t>{0, 1, 2, 3}, 4, 3);
+    const auto result = Combinations(std::vector<std::size_t>{0, 1, 2, 3}, 3);
 
     ASSERT_EQ(result.size(), 4);
 
