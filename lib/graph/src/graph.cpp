@@ -6,6 +6,7 @@
 #include <fstream>
 #include <numbers>
 #include <sstream>
+#include <stdexcept>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -395,9 +396,10 @@ Edges Graph::GetEdgesByIndices(const EdgeIndices &indices) const {
   return edges;
 }
 
-std::vector<EdgeIndices> Graph::CalculateIntersections(
+template <typename Set>
+std::vector<Set> Graph::CalculateIntersections(
     const IntersectionsPuttingDown mode) const {
-  std::vector<EdgeIndices> edges_indices(edges_.size());
+  std::vector<Set> edges_indices(edges_.size());
 
   for (auto i = 0; i < edges_.size() - 1; i++) {
     for (auto j = i + i; j < edges_.size(); j++) {
@@ -411,6 +413,40 @@ std::vector<EdgeIndices> Graph::CalculateIntersections(
   }
 
   return edges_indices;
+}
+
+std::vector<Edges> Graph::CheckGridFree(const std::size_t k,
+                                        const std::size_t l,
+                                        const bool all_sets) const {
+  if (k == 0) {
+    throw std::logic_error("k must be at least 1");
+  }
+
+  if (l == 0) {
+    throw std::logic_error("l must be at least 1");
+  }
+
+  const auto intersections = CalculateIntersections<EdgeIndicesOrdered>();
+
+  std::vector<std::size_t> candidates;
+
+  for (auto i = 0; i < intersections.size(); i++) {
+    if (intersections[i].size() >= l) {
+      candidates.push_back(i);
+    }
+  }
+
+  for (auto i = 0; i + k <= candidates.size(); i++) {
+    std::unordered_map<std::string, std::unordered_set<std::size_t>>
+        intersection_to_quantity;
+
+    for (auto j = i + 1; j < candidates.size(); j++) {
+      const auto intersection =
+          utils::IntersectSets(intersections[i], intersections[j]);
+    }
+  }
+
+  return {};
 }
 
 }  // namespace graph

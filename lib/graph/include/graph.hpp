@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <set>
 #include <unordered_set>
 
 #include "edge.hpp"
@@ -8,6 +9,9 @@
 namespace graph {
 
 namespace {
+
+using EdgeIndicesOrdered = std::set<std::size_t>;
+using EdgeIndicesUnordered = std::unordered_set<std::size_t>;
 
 using Edges = std::unordered_set<EdgeSptrConst>;
 using EdgeIndices = std::unordered_set<std::size_t>;
@@ -116,13 +120,18 @@ class Graph {
    */
   Edges CheckACL(const double alpha) const;
 
+  std::vector<Edges> CheckGridFree(const std::size_t k, const std::size_t l,
+                                   const bool all_sets = true) const;
+
   const std::vector<VertexSptr> &GetVertices() const { return vertices_; }
   const std::vector<EdgeSptr> &GetEdges() const { return edges_; }
 
  private:
   Edges CheckAC(const ACPredicat &is_satisfying_angle) const;
   Edges GetEdgesByIndices(const EdgeIndices &indices) const;
-  std::vector<EdgeIndices> CalculateIntersections(
+
+  template <typename Set = EdgeIndicesUnordered>
+  std::vector<Set> CalculateIntersections(
       const IntersectionsPuttingDown mode =
           IntersectionsPuttingDown::kSymmetric) const;
 
