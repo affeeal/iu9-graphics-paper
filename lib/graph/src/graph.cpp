@@ -237,6 +237,10 @@ GraphUptr Graph::FromDotFile(const std::string &filepath) {
 }
 
 std::vector<EdgeSptrConst> Graph::CheckKPlanar(const std::size_t k) const {
+  if (k < 1) {
+    throw std::logic_error("Graph::CheckKPlanar: failed k >= 1");
+  }
+
   const auto intersections = CalculateIntersections();
   std::vector<EdgeSptrConst> unsatisfying_edges;
 
@@ -286,7 +290,7 @@ std::vector<EdgeSptrConst> Graph::CheckKQuasiPlanar(const std::size_t k) const {
 }
 
 std::vector<EdgeSptrConst> Graph::CheckKSkewness(const std::size_t k) const {
-  if (k == 0) {
+  if (k < 1) {
     throw std::logic_error("Graph::CheckKSkewness: failed k >= 1");
   }
 

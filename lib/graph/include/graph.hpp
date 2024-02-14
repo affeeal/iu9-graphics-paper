@@ -110,8 +110,7 @@ class Graph {
       const IntersectionsPuttingDown mode =
           IntersectionsPuttingDown::kSymmetric) const;
   template <typename Container = std::unordered_set<std::size_t>>
-  std::vector<EdgeSptrConst> GetEdgesByIndices(
-      const Container &indices) const;
+  std::vector<EdgeSptrConst> GetEdgesByIndices(const Container &indices) const;
   std::vector<EdgeSptrConst> CheckAC(
       const ACPredicat &is_satisfying_angle) const;
 

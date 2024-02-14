@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "graph.hpp"
+#include "vertex.hpp"
 
 const double bezier::kThreshold = 10e-5;
 
@@ -172,6 +173,83 @@ TEST(GraphTest, TinyFromFile) {
   const auto graph = Graph::FromDotFile(kDataPathPrefix + "tiny.dot");
 
   EXPECT_TRUE(expected_graph == *graph);
+}
+
+TEST(GraphTest, CheckKPlanar_InvalidK) {
+  const auto graph = Graph({}, {});
+  EXPECT_ANY_THROW(graph.CheckKPlanar(0));
+}
+
+TEST(GraphTesT, CheckKPlanar_1Planar) {
+  std::vector<VertexSptr> vertices;
+  vertices.reserve(10);
+
+  vertices.push_back(std::make_shared<Vertex>(0, 1, "0"));
+  vertices.push_back(std::make_shared<Vertex>(2, 3, "1"));
+  vertices.push_back(std::make_shared<Vertex>(3, 2, "2"));
+  vertices.push_back(std::make_shared<Vertex>(0, 3, "3"));
+  vertices.push_back(std::make_shared<Vertex>(3, 0, "4"));
+  vertices.push_back(std::make_shared<Vertex>(1, 0, "5"));
+  vertices.push_back(std::make_shared<Vertex>(1, 1, "6"));
+  vertices.push_back(std::make_shared<Vertex>(3, 1, "7"));
+  vertices.push_back(std::make_shared<Vertex>(2, 2, "8"));
+  vertices.push_back(std::make_shared<Vertex>(3, 3, "9"));
+
+  std::vector<EdgeSptr> edges;
+  edges.reserve(6);
+
+  {
+    std::vector<bezier::CurveUptr> curves;
+    curves.push_back(std::make_unique<bezier::Curve>(
+        std::vector<bezier::Point>{bezier::Point(0, 1), bezier::Point(2, 3)}));
+    edges.push_back(
+        std::make_shared<Edge>(vertices[0], vertices[1], std::move(curves)));
+  }
+
+  {
+    std::vector<bezier::CurveUptr> curves;
+    curves.push_back(std::make_unique<bezier::Curve>(
+        std::vector<bezier::Point>{bezier::Point(2, 3), bezier::Point(3, 2)}));
+    edges.push_back(
+        std::make_shared<Edge>(vertices[1], vertices[2], std::move(curves)));
+  }
+
+  {
+    std::vector<bezier::CurveUptr> curves;
+    curves.push_back(std::make_unique<bezier::Curve>(
+        std::vector<bezier::Point>{bezier::Point(0, 3), bezier::Point(3, 0)}));
+    edges.push_back(
+        std::make_shared<Edge>(vertices[3], vertices[4], std::move(curves)));
+  }
+
+  {
+    std::vector<bezier::CurveUptr> curves;
+    curves.push_back(std::make_unique<bezier::Curve>(
+        std::vector<bezier::Point>{bezier::Point(1, 0), bezier::Point(1, 1)}));
+    edges.push_back(
+        std::make_shared<Edge>(vertices[5], vertices[6], std::move(curves)));
+  }
+
+  {
+    std::vector<bezier::CurveUptr> curves;
+    curves.push_back(std::make_unique<bezier::Curve>(
+        std::vector<bezier::Point>{bezier::Point(3, 1), bezier::Point(2, 2)}));
+    edges.push_back(
+        std::make_shared<Edge>(vertices[7], vertices[8], std::move(curves)));
+  }
+
+  {
+    std::vector<bezier::CurveUptr> curves;
+    curves.push_back(std::make_unique<bezier::Curve>(
+        std::vector<bezier::Point>{bezier::Point(2, 2), bezier::Point(3, 3)}));
+    edges.push_back(
+        std::make_shared<Edge>(vertices[8], vertices[9], std::move(curves)));
+  }
+
+  const Graph graph(std::move(vertices), std::move(edges));
+  const auto unsatisfying_edges = graph.CheckKPlanar(1);
+
+  EXPECT_TRUE(unsatisfying_edges.empty());
 }
 
 }  // namespace
