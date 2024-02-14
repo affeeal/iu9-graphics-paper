@@ -1,12 +1,32 @@
 #pragma once
 
+#include <algorithm>
 #include <set>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
+#include "edge.hpp"
+
 namespace utils {
+
+class DirectionVector {
+ public:
+  DirectionVector() = delete;
+  explicit DirectionVector(const graph::Edge &edge);
+
+  double CalculateAngle(const DirectionVector &other) const;
+  double CalculateScalarProduct(const DirectionVector &other) const;
+  double CalculateNorm() const;
+
+  double GetX() const { return x_; }
+  double GetY() const { return y_; }
+
+ private:
+  double x_;
+  double y_;
+};
 
 std::string GetFileDirectory(const std::string &filename);
 

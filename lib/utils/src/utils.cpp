@@ -1,6 +1,33 @@
 #include "utils.hpp"
 
+#include <cassert>
+#include <cmath>
+
 namespace utils {
+
+DirectionVector::DirectionVector(const graph::Edge &edge) {
+  assert(edge.GetCurves().size() == 1);
+
+  const auto start = edge.GetStart();
+  const auto end = edge.GetEnd();
+
+  x_ = end->GetX() - start->GetX();
+  y_ = end->GetY() - start->GetY();
+}
+
+double DirectionVector::CalculateAngle(const DirectionVector &other) const {
+  return std::acos(std::abs(CalculateScalarProduct(other)) / CalculateNorm() /
+                   other.CalculateNorm());
+}
+
+double DirectionVector::CalculateNorm() const {
+  return std::sqrt(x_ * x_ + y_ * y_);
+}
+
+double DirectionVector::CalculateScalarProduct(
+    const DirectionVector &other) const {
+  return x_ * other.x_ + y_ * other.y_;
+}
 
 std::string GetFileDirectory(const std::string &filename) {
   int end = filename.size() - 1;

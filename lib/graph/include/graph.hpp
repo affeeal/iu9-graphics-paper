@@ -16,23 +16,6 @@ enum class IntersectionsPuttingDown {
   kNonSymmetric,
 };
 
-class DirectionVector {
- public:
-  DirectionVector() = delete;
-  explicit DirectionVector(const Edge &edge);
-
-  double CalculateAngle(const DirectionVector &other) const;
-  double CalculateScalarProduct(const DirectionVector &other) const;
-  double CalculateNorm() const;
-
-  double GetX() const { return x_; }
-  double GetY() const { return y_; }
-
- private:
-  double x_;
-  double y_;
-};
-
 }  // namespace
 
 class Graph;
@@ -79,7 +62,7 @@ class Graph {
    * @return edges to remove if drawing is not skewness-k and empty set
    * otherwise.
    */
-  std::unordered_set<EdgeSptrConst> CheckKSkewness(const std::size_t k) const;
+  std::vector<EdgeSptrConst> CheckKSkewness(const std::size_t k) const;
 
   /**
    * Check if the drawing belongs to the RAC class.
@@ -91,7 +74,7 @@ class Graph {
    * @param alpha An angle in the range [0, pi / 2].
    * @return edges that intersect at a different angle.
    */
-  std::unordered_set<EdgeSptrConst> CheckRAC() const;
+  std::vector<EdgeSptrConst> CheckRAC() const;
 
   /**
    * Check if the drawing belongs to the ACE-alpha class.
@@ -102,7 +85,7 @@ class Graph {
    * @param alpha An angle in the range [0, pi / 2].
    * @return edges that intersect at a different angle.
    */
-  std::unordered_set<EdgeSptrConst> CheckACE(const double alpha) const;
+  std::vector<EdgeSptrConst> CheckACE(const double alpha) const;
 
   /**
    * Check if the drawing belongs to the ACL-alpha class.
@@ -113,7 +96,7 @@ class Graph {
    * @param alpha An angle in the range [0, pi / 2].
    * @return edges that intersect at an angle less than alpha.
    */
-  std::unordered_set<EdgeSptrConst> CheckACL(const double alpha) const;
+  std::vector<EdgeSptrConst> CheckACL(const double alpha) const;
 
   std::vector<KLGrid> CheckGridFree(const std::size_t k,
                                     const std::size_t l) const;
@@ -126,9 +109,10 @@ class Graph {
   std::vector<Set> CalculateIntersections(
       const IntersectionsPuttingDown mode =
           IntersectionsPuttingDown::kSymmetric) const;
+  template <typename Container = std::unordered_set<std::size_t>>
   std::vector<EdgeSptrConst> GetEdgesByIndices(
-      const std::unordered_set<std::size_t> &indices) const;
-  std::unordered_set<EdgeSptrConst> CheckAC(
+      const Container &indices) const;
+  std::vector<EdgeSptrConst> CheckAC(
       const ACPredicat &is_satisfying_angle) const;
 
   std::vector<VertexSptr> vertices_;

@@ -1,9 +1,7 @@
 #include "graph.hpp"
 
-#include <algorithm>
 #include <boost/functional/hash.hpp>
 #include <cassert>
-#include <cmath>
 #include <fstream>
 #include <numbers>
 #include <sstream>
@@ -32,30 +30,6 @@ constexpr char kCoordinatesDivider = ',';
 constexpr char kDrawCommandEnd = ';';
 
 constexpr std::size_t kCurveSize = 4;
-
-DirectionVector::DirectionVector(const Edge &edge) {
-  assert(edge.GetCurves().size() == 1);
-
-  const auto start = edge.GetStart();
-  const auto end = edge.GetEnd();
-
-  x_ = end->GetX() - start->GetX();
-  y_ = end->GetY() - start->GetY();
-}
-
-double DirectionVector::CalculateAngle(const DirectionVector &other) const {
-  return std::acos(std::abs(CalculateScalarProduct(other)) / CalculateNorm() /
-                   other.CalculateNorm());
-}
-
-double DirectionVector::CalculateNorm() const {
-  return std::sqrt(x_ * x_ + y_ * y_);
-}
-
-double DirectionVector::CalculateScalarProduct(
-    const DirectionVector &other) const {
-  return x_ * other.x_ + y_ * other.y_;
-}
 
 std::vector<std::string> GetNodes(std::string &&command) {
   std::vector<std::string> nodes;
@@ -311,13 +285,17 @@ std::vector<EdgeSptrConst> Graph::CheckKQuasiPlanar(const std::size_t k) const {
   return GetEdgesByIndices(unsatisfying_edges);
 }
 
-Edges Graph::CheckKSkewness(const std::size_t k) const {
+std::vector<EdgeSptrConst> Graph::CheckKSkewness(const std::size_t k) const {
+  if (k == 0) {
+    throw std::logic_error("Graph::CheckKSkewness: failed k >= 1");
+  }
+
   if (edges_.size() <= 1) {
     return {};
   }
 
   auto intersections = CalculateIntersections();
-  EdgeIndices prohibited_edges;
+  std::unordered_set<std::size_t> edges_to_delete;
   auto deletions_left = k;
 
   while (true) {
@@ -340,36 +318,40 @@ Edges Graph::CheckKSkewness(const std::size_t k) const {
     }
 
     intersections[edge_with_most_intersections].clear();
-    prohibited_edges.insert(edge_with_most_intersections);
+    edges_to_delete.insert(edge_with_most_intersections);
     deletions_left--;
   }
 
-  return (deletions_left >= 0 ? Edges{} : GetEdgesByIndices(prohibited_edges));
+  return (deletions_left >= 0 ? std::vector<EdgeSptrConst>{}
+                              : GetEdgesByIndices(edges_to_delete));
 }
 
-Edges Graph::CheckRAC() const { return CheckACE(std::numbers::pi / 2); }
+std::vector<EdgeSptrConst> Graph::CheckRAC() const {
+  return CheckACE(std::numbers::pi / 2);
+}
 
-Edges Graph::CheckACE(const double angle) const {
+std::vector<EdgeSptrConst> Graph::CheckACE(const double angle) const {
   return CheckAC(
       [angle](const double other_angle) { return other_angle == angle; });
 }
 
-Edges Graph::CheckACL(const double angle) const {
+std::vector<EdgeSptrConst> Graph::CheckACL(const double angle) const {
   return CheckAC(
       [angle](const double other_angle) { return other_angle >= angle; });
 }
 
-Edges Graph::CheckAC(const ACPredicat &is_satisfying_angle) const {
+std::vector<EdgeSptrConst> Graph::CheckAC(
+    const ACPredicat &is_satisfying_angle) const {
   const auto intersections =
       CalculateIntersections(IntersectionsPuttingDown::kNonSymmetric);
 
-  std::vector<DirectionVector> direction_vectors;
+  std::vector<utils::DirectionVector> direction_vectors;
   direction_vectors.reserve(edges_.size());
   for (const auto &edge : edges_) {
-    direction_vectors.push_back(DirectionVector(*edge));
+    direction_vectors.push_back(utils::DirectionVector(*edge));
   }
 
-  EdgeIndices prohibited_edges;
+  std::unordered_set<std::size_t> unsatisfying_edges;
 
   for (auto i = 0; i < intersections.size(); i++) {
     for (const auto j : intersections[i]) {
@@ -377,17 +359,18 @@ Edges Graph::CheckAC(const ACPredicat &is_satisfying_angle) const {
           direction_vectors[i].CalculateAngle(direction_vectors[j]);
       assert(0 <= angle && angle <= std::numbers::pi / 2);
       if (!is_satisfying_angle(angle)) {
-        prohibited_edges.insert(i);
-        prohibited_edges.insert(j);
+        unsatisfying_edges.insert(i);
+        unsatisfying_edges.insert(j);
       }
     }
   }
 
-  return GetEdgesByIndices(prohibited_edges);
+  return GetEdgesByIndices(unsatisfying_edges);
 }
 
+template <typename Container>
 std::vector<EdgeSptrConst> Graph::GetEdgesByIndices(
-    const std::unordered_set<std::size_t> &indices) const {
+    const Container &indices) const {
   std::vector<EdgeSptrConst> edges;
   edges.reserve(indices.size());
 
@@ -401,20 +384,20 @@ std::vector<EdgeSptrConst> Graph::GetEdgesByIndices(
 template <typename Set>
 std::vector<Set> Graph::CalculateIntersections(
     const IntersectionsPuttingDown mode) const {
-  std::vector<Set> edges_indices(edges_.size());
+  std::vector<Set> intersections(edges_.size());
 
   for (auto i = 0; i < edges_.size() - 1; i++) {
     for (auto j = i + i; j < edges_.size(); j++) {
       if (edges_[i]->IsIntersect(*edges_[j])) {
-        edges_indices[i].insert(j);
+        intersections[i].insert(j);
         if (mode == IntersectionsPuttingDown::kSymmetric) {
-          edges_indices[j].insert(i);
+          intersections[j].insert(i);
         }
       }
     }
   }
 
-  return edges_indices;
+  return intersections;
 }
 
 std::vector<KLGrid> Graph::CheckGridFree(const std::size_t k,
@@ -427,7 +410,7 @@ std::vector<KLGrid> Graph::CheckGridFree(const std::size_t k,
     throw std::logic_error("Graph::CheckGridFree: failed l >= 1");
   }
 
-  const auto intersections = CalculateIntersections<EdgeIndicesOrdered>();
+  const auto intersections = CalculateIntersections<std::set<std::size_t>>();
 
   std::vector<std::size_t> k_groups_candidates;
   for (std::size_t i = 0; i < intersections.size(); i++) {
