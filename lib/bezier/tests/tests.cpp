@@ -1,13 +1,15 @@
 #include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
 
+#include <iostream>
+
 #include "curve.hpp"
 #include "point.hpp"
 #include "rectangle.hpp"
 
 namespace bezier {
 
-const double kThreshold = 10e-5;
+const double kThreshold = 10e-6;
 
 namespace {
 
@@ -210,6 +212,14 @@ TEST(CurveTest, QuadraticCurvesSeveralIntersections) {
 
   EXPECT_TRUE(first.IsIntersect(second));
   EXPECT_TRUE(second.IsIntersect(first));
+}
+
+TEST(CurveTest, LinearCurvesIntersectionPoint) {
+  const Curve first(std::vector<Point>{Point(0, 4), Point(3, 1)});
+  const Curve second(std::vector<Point>{Point(1, 0), Point(2, 3)});
+  const auto intersection_points = first.Intersect(second);
+
+  ASSERT_EQ(intersection_points.size(), 1);
 }
 
 }  // namespace

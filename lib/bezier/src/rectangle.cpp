@@ -22,4 +22,8 @@ bool Rectangle::IsOverlap(const Rectangle &other) const {
          bottom_right_.GetX() >= other.GetTopLeft().GetX();
 }
 
+Point Rectangle::CalculateCenter() const {
+  return top_left_.CalculateCenter(bottom_right_);
+}
+
 }  // namespace bezier

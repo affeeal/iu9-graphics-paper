@@ -19,6 +19,7 @@ class Edge {
   bool IsIntersect(const Edge &other) const;
 
   bool operator==(const Edge &other) const;
+  friend std::ostream &operator<<(std::ostream &os, const Edge &edge);
 
   VertexSptrConst GetStart() const { return start_; }
   VertexSptrConst GetEnd() const { return end_; }

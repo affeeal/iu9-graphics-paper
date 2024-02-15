@@ -3,6 +3,7 @@
 #include <boost/functional/hash.hpp>
 #include <cassert>
 #include <fstream>
+#include <iostream>
 #include <numbers>
 #include <sstream>
 #include <stdexcept>
@@ -30,6 +31,17 @@ constexpr char kCoordinatesDivider = ',';
 constexpr char kDrawCommandEnd = ';';
 
 constexpr std::size_t kCurveSize = 4;
+
+template <typename T>
+void PrintIntersections(const T &intersections) {
+  for (auto i = 0; i < intersections.size(); i++) {
+    std::cerr << i << ": ";
+    for (const auto j : intersections[i]) {
+      std::cerr << j << " ";
+    }
+    std::cerr << std::endl;
+  }
+}
 
 std::vector<std::string> GetNodes(std::string &&command) {
   std::vector<std::string> nodes;
@@ -242,6 +254,7 @@ std::vector<EdgeSptrConst> Graph::CheckKPlanar(const std::size_t k) const {
   }
 
   const auto intersections = CalculateIntersections();
+  PrintIntersections(intersections);
   std::vector<EdgeSptrConst> unsatisfying_edges;
 
   for (std::size_t i = 0; i < edges_.size(); i++) {
@@ -391,7 +404,7 @@ std::vector<Set> Graph::CalculateIntersections(
   std::vector<Set> intersections(edges_.size());
 
   for (auto i = 0; i < edges_.size() - 1; i++) {
-    for (auto j = i + i; j < edges_.size(); j++) {
+    for (auto j = i + 1; j < edges_.size(); j++) {
       if (edges_[i]->IsIntersect(*edges_[j])) {
         intersections[i].insert(j);
         if (mode == IntersectionsPuttingDown::kSymmetric) {

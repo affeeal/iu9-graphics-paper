@@ -1,6 +1,8 @@
 #include "curve.hpp"
 
+#include <algorithm>
 #include <cassert>
+#include <iostream>
 #include <limits>
 
 namespace bezier {
@@ -118,6 +120,62 @@ bool Curve::AreIntersect(const Curve &first, const Curve &second,
          AreIntersect(*first_split.first, *second_split.second, threshold) ||
          AreIntersect(*first_split.second, *second_split.first, threshold) ||
          AreIntersect(*first_split.second, *second_split.second, threshold);
+}
+
+std::vector<Point> Curve::Intersect(const Curve &other,
+                                    const double threshold) const {
+  std::vector<Point> intersection_points;
+  Intersect(intersection_points, *this, other, threshold);
+  return intersection_points;
+}
+
+void Curve::Intersect(std::vector<Point> &intersection_points,
+                      const Curve &first, const Curve &second,
+                      const double threshold) const {
+  const auto first_box = first.CalculateBoundingBox();
+  const auto second_box = second.CalculateBoundingBox();
+
+  assert(first_box);
+  assert(second_box);
+
+  if (!first_box->IsOverlap(*second_box)) {
+    return;
+  }
+
+  // One of the possible completion conditions
+  if (first_box->CalculateArea() + second_box->CalculateArea() < threshold) {
+    // One of the possible intersection approximation
+    auto intersection_point = first_box->CalculateCenter().CalculateCenter(
+        second_box->CalculateCenter());
+
+    auto is_approximately_equal = [&intersection_point](const Point &other) {
+      return intersection_point.IsInNeighborhood(other);
+    };
+
+    if (std::find_if(intersection_points.begin(), intersection_points.end(),
+                     is_approximately_equal) == intersection_points.end()) {
+      intersection_points.push_back(std::move(intersection_point));
+    }
+
+    return;
+  }
+
+  const auto first_split = first.Split(kCurveCenterT);
+  const auto second_split = second.Split(kCurveCenterT);
+
+  assert(first_split.first);
+  assert(first_split.second);
+  assert(second_split.first);
+  assert(second_split.second);
+
+  Intersect(intersection_points, *first_split.first, *second_split.first,
+            threshold);
+  Intersect(intersection_points, *first_split.first, *second_split.second,
+            threshold);
+  Intersect(intersection_points, *first_split.second, *second_split.first,
+            threshold);
+  Intersect(intersection_points, *first_split.second, *second_split.second,
+            threshold);
 }
 
 bool Curve::operator==(const Curve &other) const {

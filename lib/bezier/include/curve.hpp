@@ -22,6 +22,8 @@ class Curve {
   std::pair<CurveUptr, CurveUptr> Split(const double t) const;
   bool IsIntersect(const Curve &other,
                    const double threshold = kThreshold) const;
+  std::vector<Point> Intersect(const Curve &other,
+                               const double threshould = kThreshold) const;
 
   bool operator==(const Curve &other) const;
 
@@ -34,6 +36,8 @@ class Curve {
 
   bool AreIntersect(const Curve &first, const Curve &second,
                     const double threshold) const;
+  void Intersect(std::vector<Point> &intersection_points, const Curve &first,
+                 const Curve &second, const double threshold) const;
 
   std::vector<Point> points_;
 };

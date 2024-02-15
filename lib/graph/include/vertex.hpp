@@ -2,6 +2,8 @@
 
 #include <memory>
 
+#include "point.hpp"
+
 namespace graph {
 
 class Vertex;
@@ -11,11 +13,14 @@ using VertexSptrConst = std::shared_ptr<const Vertex>;
 
 class Vertex {
  public:
-  Vertex(double x, double y, const std::string &label);
+  Vertex(double x, double y, const std::string& label);
 
-  bool operator==(const Vertex &other) const;
+  bool operator==(const Vertex& other) const;
+  friend std::ostream& operator<<(std::ostream& os, const Vertex& vertex);
 
-  const std::string &GetLabel() const { return label_; }
+  bezier::Point AsPoint() const;
+
+  const std::string& GetLabel() const { return label_; }
   double GetX() const { return x_; }
   double GetY() const { return y_; }
 

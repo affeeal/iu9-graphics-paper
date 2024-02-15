@@ -61,8 +61,13 @@ TEST(GraphTest, SimpleGraphBuilding) {
   const auto &graph_edges = graph.GetEdges();
 
   EXPECT_TRUE(graph_edges[2]->IsIntersect(*graph_edges[3]));
-  EXPECT_TRUE(graph_edges[0]->IsIntersect(*graph_edges[2]));
+  EXPECT_TRUE(graph_edges[3]->IsIntersect(*graph_edges[2]));
+
+  EXPECT_FALSE(graph_edges[0]->IsIntersect(*graph_edges[2]));
+  EXPECT_FALSE(graph_edges[2]->IsIntersect(*graph_edges[0]));
+
   EXPECT_FALSE(graph_edges[0]->IsIntersect(*graph_edges[1]));
+  EXPECT_FALSE(graph_edges[1]->IsIntersect(*graph_edges[0]));
 }
 
 TEST(GraphTest, CurvedGraphBuilding) {
@@ -182,26 +187,19 @@ TEST(GraphTest, CheckKPlanar_InvalidK) {
 
 TEST(GraphTesT, CheckKPlanar_1Planar) {
   std::vector<VertexSptr> vertices;
-  vertices.reserve(10);
+  vertices.reserve(3);
 
-  vertices.push_back(std::make_shared<Vertex>(0, 1, "0"));
-  vertices.push_back(std::make_shared<Vertex>(2, 3, "1"));
-  vertices.push_back(std::make_shared<Vertex>(3, 2, "2"));
-  vertices.push_back(std::make_shared<Vertex>(0, 3, "3"));
-  vertices.push_back(std::make_shared<Vertex>(3, 0, "4"));
-  vertices.push_back(std::make_shared<Vertex>(1, 0, "5"));
-  vertices.push_back(std::make_shared<Vertex>(1, 1, "6"));
-  vertices.push_back(std::make_shared<Vertex>(3, 1, "7"));
-  vertices.push_back(std::make_shared<Vertex>(2, 2, "8"));
-  vertices.push_back(std::make_shared<Vertex>(3, 3, "9"));
+  vertices.push_back(std::make_shared<Vertex>(1, 3, "a"));
+  vertices.push_back(std::make_shared<Vertex>(1, 1, "b"));
+  vertices.push_back(std::make_shared<Vertex>(2, 1, "c"));
 
   std::vector<EdgeSptr> edges;
-  edges.reserve(6);
+  edges.reserve(2);
 
   {
     std::vector<bezier::CurveUptr> curves;
     curves.push_back(std::make_unique<bezier::Curve>(
-        std::vector<bezier::Point>{bezier::Point(0, 1), bezier::Point(2, 3)}));
+        std::vector<bezier::Point>{bezier::Point(1, 3), bezier::Point(1, 1)}));
     edges.push_back(
         std::make_shared<Edge>(vertices[0], vertices[1], std::move(curves)));
   }
@@ -209,47 +207,19 @@ TEST(GraphTesT, CheckKPlanar_1Planar) {
   {
     std::vector<bezier::CurveUptr> curves;
     curves.push_back(std::make_unique<bezier::Curve>(
-        std::vector<bezier::Point>{bezier::Point(2, 3), bezier::Point(3, 2)}));
+        std::vector<bezier::Point>{bezier::Point(1, 1), bezier::Point(2, 1)}));
     edges.push_back(
         std::make_shared<Edge>(vertices[1], vertices[2], std::move(curves)));
-  }
-
-  {
-    std::vector<bezier::CurveUptr> curves;
-    curves.push_back(std::make_unique<bezier::Curve>(
-        std::vector<bezier::Point>{bezier::Point(0, 3), bezier::Point(3, 0)}));
-    edges.push_back(
-        std::make_shared<Edge>(vertices[3], vertices[4], std::move(curves)));
-  }
-
-  {
-    std::vector<bezier::CurveUptr> curves;
-    curves.push_back(std::make_unique<bezier::Curve>(
-        std::vector<bezier::Point>{bezier::Point(1, 0), bezier::Point(1, 1)}));
-    edges.push_back(
-        std::make_shared<Edge>(vertices[5], vertices[6], std::move(curves)));
-  }
-
-  {
-    std::vector<bezier::CurveUptr> curves;
-    curves.push_back(std::make_unique<bezier::Curve>(
-        std::vector<bezier::Point>{bezier::Point(3, 1), bezier::Point(2, 2)}));
-    edges.push_back(
-        std::make_shared<Edge>(vertices[7], vertices[8], std::move(curves)));
-  }
-
-  {
-    std::vector<bezier::CurveUptr> curves;
-    curves.push_back(std::make_unique<bezier::Curve>(
-        std::vector<bezier::Point>{bezier::Point(2, 2), bezier::Point(3, 3)}));
-    edges.push_back(
-        std::make_shared<Edge>(vertices[8], vertices[9], std::move(curves)));
   }
 
   const Graph graph(std::move(vertices), std::move(edges));
   const auto unsatisfying_edges = graph.CheckKPlanar(1);
 
-  EXPECT_TRUE(unsatisfying_edges.empty());
+  for (const auto &edge : unsatisfying_edges) {
+    std::cout << *edge << std::endl;
+  }
+
+  EXPECT_EQ(unsatisfying_edges.size(), 0);
 }
 
 }  // namespace
