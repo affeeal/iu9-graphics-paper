@@ -17,8 +17,8 @@ double Rectangle::CalculateArea() const {
 }
 
 double Rectangle::CalculatePerimeter() const {
-  const auto perimeter =  2 * (bottom_right_.GetX() - top_left_.GetX() + top_left_.GetY() -
-              bottom_right_.GetY());
+  const auto perimeter = 2 * (bottom_right_.GetX() - top_left_.GetX() +
+                              top_left_.GetY() - bottom_right_.GetY());
   std::cout << "perimeter: " << perimeter << std::endl;
   return perimeter;
 }

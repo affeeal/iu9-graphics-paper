@@ -9,7 +9,7 @@
 
 namespace bezier {
 
-const double kThreshold = 10e-6;
+const double kThreshold = 10e-4;
 
 namespace {
 
@@ -136,11 +136,11 @@ TEST(CurveTest, LinearCurvesNoIntersection) {
   const Curve first(std::vector<Point>{Point(1, 1), Point(2, 6)});
   const Curve second(std::vector<Point>{Point(2, 5), Point(3, 1)});
 
-  EXPECT_FALSE(first.IsIntersect(second, 0.1));
-  EXPECT_FALSE(second.IsIntersect(first, 0.1));
+  EXPECT_FALSE(first.IsIntersect(second, 1));
+  EXPECT_FALSE(second.IsIntersect(first, 1));
 
-  EXPECT_TRUE(first.IsIntersect(second, 1));
-  EXPECT_TRUE(second.IsIntersect(first, 1));
+  EXPECT_TRUE(first.IsIntersect(second, 10));
+  EXPECT_TRUE(second.IsIntersect(first, 10));
 }
 
 TEST(CurveTest, LinearCurvesTangency) {
@@ -163,11 +163,11 @@ TEST(CurveTest, HeterogeneousCurvesNoIntersection) {
   const Curve first(std::vector<Point>{Point(4, 2), Point(6, 8), Point(10, 4)});
   const Curve second(std::vector<Point>{Point(5, 4), Point(6, 5)});
 
-  EXPECT_FALSE(first.IsIntersect(second, 0.01));
-  EXPECT_FALSE(second.IsIntersect(first, 0.01));
+  EXPECT_FALSE(first.IsIntersect(second, 0.1));
+  EXPECT_FALSE(second.IsIntersect(first, 0.1));
 
-  EXPECT_TRUE(first.IsIntersect(second, 0.1));
-  EXPECT_TRUE(second.IsIntersect(first, 0.1));
+  EXPECT_TRUE(first.IsIntersect(second, 1));
+  EXPECT_TRUE(second.IsIntersect(first, 1));
 }
 
 TEST(CurveTest, HeterogeneousCurvesTangency) {
@@ -198,11 +198,11 @@ TEST(CurveTest, QuadraticCurvesNoIntersection) {
   const Curve first(std::vector<Point>{Point(4, 2), Point(6, 8), Point(10, 4)});
   const Curve second(std::vector<Point>{Point(5, 2), Point(6, 7), Point(9, 4)});
 
-  EXPECT_FALSE(first.IsIntersect(second, 0.1));
-  EXPECT_FALSE(second.IsIntersect(first, 0.1));
+  EXPECT_FALSE(first.IsIntersect(second, 1));
+  EXPECT_FALSE(second.IsIntersect(first, 1));
 
-  EXPECT_TRUE(first.IsIntersect(second, 1));
-  EXPECT_TRUE(second.IsIntersect(first, 1));
+  EXPECT_TRUE(first.IsIntersect(second, 10));
+  EXPECT_TRUE(second.IsIntersect(first, 10));
 }
 
 TEST(CurveTest, QuadraticCurvesSeveralIntersections) {

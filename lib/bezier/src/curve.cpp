@@ -105,8 +105,7 @@ bool Curve::AreIntersect(const Curve &first, const Curve &second,
     return false;
   }
 
-  // One of the possible completion conditions
-  if (first_box->CalculateArea() + second_box->CalculateArea() < threshold) {
+  if (GetCompletionMetric(*first_box, *second_box) < threshold) {
     return true;
   }
 
@@ -134,7 +133,8 @@ std::vector<Point> Curve::Intersect(const Curve &other,
 void Curve::Intersect(std::vector<Point> &intersection_points,
                       const Curve &first, const Curve &second,
                       const double threshold) const {
-  std::cout << "intersecting " << first << " and " << second << std::endl;
+  std::cout << "intersecting curves " << first << " and " << second
+            << std::endl;
   const auto first_box = first.CalculateBoundingBox();
   const auto second_box = second.CalculateBoundingBox();
 
@@ -146,7 +146,8 @@ void Curve::Intersect(std::vector<Point> &intersection_points,
   }
 
   const auto metric = GetCompletionMetric(*first_box, *second_box);
-  std::cout << "comparing " << metric << ", " << threshold << ": " << (metric < threshold) << std::endl;
+  std::cout << "comparing " << metric << ", " << threshold << ": "
+            << (metric < threshold) << std::endl;
   if (metric < threshold) {
     // One of the possible intersection approximation
     auto intersection_point = first_box->CalculateCenter().CalculateCenter(
@@ -199,7 +200,7 @@ std::ostream &operator<<(std::ostream &os, const Curve &curve) {
 }
 
 double Curve::GetCompletionMetric(const Rectangle &r1,
-                                const Rectangle &r2) const {
+                                  const Rectangle &r2) const {
   return r1.CalculatePerimeter() + r2.CalculatePerimeter();
 }
 

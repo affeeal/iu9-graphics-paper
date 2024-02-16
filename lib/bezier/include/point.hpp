@@ -5,7 +5,7 @@
 
 namespace bezier {
 
-constexpr double kEpsilon = 10e-3;
+constexpr double kEpsilon = 10e-4;
 
 class Point {
  public:

@@ -1,0 +1,53 @@
+\documentclass{article}
+\usepackage[x11names, svgnames, rgb]{xcolor}
+\usepackage[utf8]{inputenc}
+\usepackage{tikz}
+\usetikzlibrary{snakes,arrows,shapes}
+\usepackage{amsmath}
+%
+%
+
+%
+
+%
+
+\begin{document}
+\pagestyle{empty}
+%
+%
+%
+
+\enlargethispage{100cm}
+% Start of code
+\begin{tikzpicture}[>=latex',line join=bevel,]
+%%
+\node (a) at (123.0bp,378.0bp) [draw,ellipse] {$a$};
+  \node (b) at (123.0bp,306.0bp) [draw,ellipse] {$b$};
+  \node (c) at (207.0bp,234.0bp) [draw,ellipse] {$c$};
+  \node (d) at (207.0bp,162.0bp) [draw,ellipse] {$d$};
+  \node (e) at (141.0bp,90.0bp) [draw,ellipse] {$e$};
+  \node (f) at (141.0bp,18.0bp) [draw,ellipse] {$f$};
+  \draw [] (a) ..controls (123.0bp,348.85bp) and (123.0bp,334.92bp)  .. (b);
+  \draw [] (a) ..controls (141.48bp,351.08bp) and (151.15bp,336.93bp)  .. (159.0bp,324.0bp) .. controls (174.03bp,299.24bp) and (189.63bp,269.42bp)  .. (c);
+  \draw [] (a) ..controls (170.87bp,345.35bp) and (224.05bp,303.69bp)  .. (243.0bp,252.0bp) .. controls (248.51bp,236.98bp) and (247.7bp,231.29bp)  .. (243.0bp,216.0bp) .. controls (238.62bp,201.75bp) and (228.96bp,187.9bp)  .. (d);
+  \draw [] (a) ..controls (101.04bp,352.1bp) and (91.381bp,338.25bp)  .. (87.0bp,324.0bp) .. controls (82.297bp,308.71bp) and (84.866bp,303.86bp)  .. (87.0bp,288.0bp) .. controls (96.223bp,219.46bp) and (122.73bp,141.04bp)  .. (e);
+  \draw [] (a) ..controls (67.754bp,345.17bp) and (0.0bp,296.97bp)  .. (0.0bp,235.0bp) .. controls (0.0bp,235.0bp) and (0.0bp,235.0bp)  .. (0.0bp,161.0bp) .. controls (0.0bp,94.296bp) and (79.312bp,47.773bp)  .. (f);
+  \draw [] (b) ..controls (154.07bp,279.11bp) and (175.99bp,260.84bp)  .. (c);
+  \draw [] (b) ..controls (140.37bp,270.58bp) and (155.97bp,240.76bp)  .. (171.0bp,216.0bp) .. controls (178.85bp,203.07bp) and (188.52bp,188.92bp)  .. (d);
+  \draw [] (b) ..controls (127.81bp,247.78bp) and (136.17bp,148.38bp)  .. (e);
+  \draw [] (b) ..controls (105.8bp,249.13bp) and (81.031bp,149.95bp)  .. (105.0bp,72.0bp) .. controls (109.38bp,57.753bp) and (119.04bp,43.9bp)  .. (f);
+  \draw [] (c) ..controls (207.0bp,204.85bp) and (207.0bp,190.92bp)  .. (d);
+  \draw [] (c) ..controls (187.18bp,207.25bp) and (177.63bp,193.35bp)  .. (171.0bp,180.0bp) .. controls (159.11bp,156.05bp) and (150.14bp,126.26bp)  .. (e);
+  \draw [] (c) ..controls (228.96bp,208.1bp) and (238.62bp,194.25bp)  .. (243.0bp,180.0bp) .. controls (247.7bp,164.71bp) and (247.41bp,159.38bp)  .. (243.0bp,144.0bp) .. controls (228.95bp,94.998bp) and (183.32bp,52.492bp)  .. (f);
+  \draw [] (d) ..controls (181.8bp,134.28bp) and (166.17bp,117.7bp)  .. (e);
+  \draw [] (d) ..controls (197.86bp,125.74bp) and (188.89bp,95.951bp)  .. (177.0bp,72.0bp) .. controls (170.37bp,58.65bp) and (160.82bp,44.754bp)  .. (f);
+  \draw [] (e) ..controls (141.0bp,60.846bp) and (141.0bp,46.917bp)  .. (f);
+%
+\end{tikzpicture}
+% End of code
+
+%
+\end{document}
+%
+
+

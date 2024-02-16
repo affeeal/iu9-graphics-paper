@@ -38,7 +38,7 @@ bool Edge::IsIntersect(const Edge &other) const {
                                j == other_curves_back && ends_match)) {
         const auto intersection_points =
             curves_[i]->Intersect(*other.curves_[j]);
-        std::cout << "intersection: ";
+        std::cout << "intersection points: ";
         for (const auto &p : intersection_points) {
           std::cout << p << ' ';
         }
