@@ -406,6 +406,8 @@ std::vector<Set> Graph::CalculateIntersections(
   for (auto i = 0; i < edges_.size() - 1; i++) {
     for (auto j = i + 1; j < edges_.size(); j++) {
       if (edges_[i]->IsIntersect(*edges_[j])) {
+        std::cout << i << " and " << j << std::endl;
+        ;
         intersections[i].insert(j);
         if (mode == IntersectionsPuttingDown::kSymmetric) {
           intersections[j].insert(i);

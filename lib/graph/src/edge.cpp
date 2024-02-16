@@ -38,12 +38,17 @@ bool Edge::IsIntersect(const Edge &other) const {
                                j == other_curves_back && ends_match)) {
         const auto intersection_points =
             curves_[i]->Intersect(*other.curves_[j]);
+        std::cout << "intersection: ";
+        for (const auto &p : intersection_points) {
+          std::cout << p << ' ';
+        }
+        std::cout << std::endl;
 
-        const auto &point_to_compare = (i == 0 ? start : end);
-        const auto is_approximately_equal =
-            [&point_to_compare](const bezier::Point &other) {
-              return point_to_compare.IsInNeighborhood(other);
-            };
+        // const auto &point_to_compare = (i == 0 ? start : end);
+        const auto is_approximately_equal = [&start,
+                                             &end](const bezier::Point &other) {
+          return start.IsInNeighborhood(other) || end.IsInNeighborhood(other);
+        };
 
         if (std::find_if_not(
                 intersection_points.begin(), intersection_points.end(),
@@ -51,6 +56,7 @@ bool Edge::IsIntersect(const Edge &other) const {
           return true;
         };
       } else if (curves_[i]->IsIntersect(*other.curves_[j])) {
+        std::cerr << i << " intersects " << j << std::endl;
         return true;
       }
     }
@@ -76,14 +82,7 @@ bool Edge::operator==(const Edge &other) const {
 
 std::ostream &operator<<(std::ostream &os, const Edge &edge) {
   for (std::size_t i = 0; i < edge.curves_.size(); i++) {
-    const auto &points = edge.curves_[i]->GetPoints();
-    for (std::size_t j = 0; j < points.size(); j++) {
-      std::cout << points[j];
-
-      if (j + 1 < points.size()) {
-        std::cout << '-';
-      }
-    }
+    std::cout << *edge.curves_[i];
 
     if (i + 1 < edge.curves_.size()) {
       std::cout << ", ";

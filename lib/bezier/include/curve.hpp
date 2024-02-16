@@ -26,6 +26,7 @@ class Curve {
                                const double threshould = kThreshold) const;
 
   bool operator==(const Curve &other) const;
+  friend std::ostream &operator<<(std::ostream &os, const Curve &curve);
 
   const std::vector<Point> &GetPoints() const { return points_; }
 
@@ -38,6 +39,7 @@ class Curve {
                     const double threshold) const;
   void Intersect(std::vector<Point> &intersection_points, const Curve &first,
                  const Curve &second, const double threshold) const;
+  double GetCompletionMetric(const Rectangle &r1, const Rectangle &r2) const;
 
   std::vector<Point> points_;
 };

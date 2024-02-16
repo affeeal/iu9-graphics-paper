@@ -1,6 +1,7 @@
 #include "rectangle.hpp"
 
 #include <cassert>
+#include <iostream>
 
 namespace bezier {
 
@@ -13,6 +14,13 @@ Rectangle::Rectangle(Point top_left, Point bottom_right)
 double Rectangle::CalculateArea() const {
   return (bottom_right_.GetX() - top_left_.GetX()) *
          (top_left_.GetY() - bottom_right_.GetY());
+}
+
+double Rectangle::CalculatePerimeter() const {
+  const auto perimeter =  2 * (bottom_right_.GetX() - top_left_.GetX() + top_left_.GetY() -
+              bottom_right_.GetY());
+  std::cout << "perimeter: " << perimeter << std::endl;
+  return perimeter;
 }
 
 bool Rectangle::IsOverlap(const Rectangle &other) const {

@@ -5,6 +5,8 @@
 #include <iostream>
 #include <limits>
 
+#include "rectangle.hpp"
+
 namespace bezier {
 
 static constexpr auto kCurveCenterT = 0.5;
@@ -132,6 +134,7 @@ std::vector<Point> Curve::Intersect(const Curve &other,
 void Curve::Intersect(std::vector<Point> &intersection_points,
                       const Curve &first, const Curve &second,
                       const double threshold) const {
+  std::cout << "intersecting " << first << " and " << second << std::endl;
   const auto first_box = first.CalculateBoundingBox();
   const auto second_box = second.CalculateBoundingBox();
 
@@ -142,8 +145,9 @@ void Curve::Intersect(std::vector<Point> &intersection_points,
     return;
   }
 
-  // One of the possible completion conditions
-  if (first_box->CalculateArea() + second_box->CalculateArea() < threshold) {
+  const auto metric = GetCompletionMetric(*first_box, *second_box);
+  std::cout << "comparing " << metric << ", " << threshold << ": " << (metric < threshold) << std::endl;
+  if (metric < threshold) {
     // One of the possible intersection approximation
     auto intersection_point = first_box->CalculateCenter().CalculateCenter(
         second_box->CalculateCenter());
@@ -180,6 +184,23 @@ void Curve::Intersect(std::vector<Point> &intersection_points,
 
 bool Curve::operator==(const Curve &other) const {
   return points_ == other.points_;
+}
+
+std::ostream &operator<<(std::ostream &os, const Curve &curve) {
+  for (std::size_t i = 0; i < curve.points_.size(); i++) {
+    std::cout << curve.points_[i];
+
+    if (i + 1 < curve.points_.size()) {
+      std::cout << '-';
+    }
+  }
+
+  return os;
+}
+
+double Curve::GetCompletionMetric(const Rectangle &r1,
+                                const Rectangle &r2) const {
+  return r1.CalculatePerimeter() + r2.CalculatePerimeter();
 }
 
 }  // namespace bezier

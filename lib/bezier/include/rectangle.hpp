@@ -16,6 +16,7 @@ class Rectangle {
   Rectangle(Point top_left, Point bottom_right);
 
   double CalculateArea() const;
+  double CalculatePerimeter() const;
   bool IsOverlap(const Rectangle &other) const;
   Point CalculateCenter() const;
 
