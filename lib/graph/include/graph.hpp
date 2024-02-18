@@ -25,6 +25,11 @@ using GraphUptr = std::unique_ptr<Graph>;
 
 class Graph {
  public:
+  enum class Filetype {
+    kDot,
+    kTex,
+  };
+
   Graph() = delete;
   Graph(std::vector<VertexSptr> &&vertices, std::vector<EdgeSptr> &&edges)
       : vertices_(std::move(vertices)), edges_(std::move(edges)) {}
@@ -33,7 +38,8 @@ class Graph {
 
   bool operator==(const Graph &other) const;
 
-  static GraphUptr FromDotFile(const std::string &filepath);
+  static GraphUptr FromFile(const std::string &path,
+                            const Filetype type = Filetype::kDot);
 
   /**
    * Check if the drawing belongs to the k-planar class.

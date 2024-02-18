@@ -113,6 +113,7 @@ CliqueComplementResult PickCliques(
 
 template <typename T>
 void PrintIntersections(const T &intersections) {
+  std::cerr << "INTERSECTIONS:\n";
   for (auto i = 0; i < intersections.size(); i++) {
     std::cerr << i << ": ";
     for (const auto j : intersections[i]) {
@@ -282,14 +283,21 @@ bool Graph::operator==(const Graph &other) const {
   return true;
 }
 
-GraphUptr Graph::FromDotFile(const std::string &filepath) {
-  {
+GraphUptr Graph::FromFile(const std::string &path, const Filetype type) {
+  if (type == Filetype::kDot) {
     const auto command =
-        "dot2tex " + filepath + " -ftikz -tmath -o " + filepath + ".tex";
+        "dot2tex " + path + " -ftikz -tmath -o " + path + ".tex";
     std::system(command.c_str());
   }
 
-  std::ifstream tex_file(filepath + ".tex");
+  std::ifstream tex_file;
+
+  if (type == Filetype::kDot) {
+    tex_file.open(path + ".tex");
+  } else {  // type == Filetype::kTex
+    tex_file.open(path);
+  }
+
   if (!tex_file.is_open()) {
     throw std::runtime_error("Failed to open .tex file");
   }
@@ -318,8 +326,8 @@ GraphUptr Graph::FromDotFile(const std::string &filepath) {
     }
   }
 
-  {
-    const auto command = "rm " + filepath + ".tex";
+  if (type == Filetype::kDot) {
+    const auto command = "rm " + path + ".tex";
     std::system(command.c_str());
   }
 
@@ -352,6 +360,7 @@ std::vector<std::vector<EdgeSptrConst>> Graph::CheckKQuasiPlanar(
   }
 
   auto intersections = CalculateIntersections();
+  PrintIntersections(intersections);
   auto unsatisfying_edges =
       RemainKQuasiPlanarUnsatisfyingEdges(intersections, k);
 
@@ -376,12 +385,18 @@ std::vector<std::vector<EdgeSptrConst>> Graph::CheckKQuasiPlanar(
   std::vector<std::vector<EdgeSptrConst>> k_cliques;
   k_cliques.reserve(cliques.size());  // lower bound
 
-  for (const auto &[_, clique] : cliques) {
-    assert(clique->size() >= k);
+  std::unordered_set<std::size_t> considered_k_cliques;
+  considered_k_cliques.reserve(cliques.size());  // lower bound
 
+  for (const auto &[_, clique] : cliques) {
     for (const auto &combination :
          utils::Combinations(utils::AsVector(*clique), k)) {
-      k_cliques.push_back(EdgesByIndices(combination));
+      const auto hash =
+          boost::hash_range(combination.begin(), combination.end());
+      if (!considered_k_cliques.contains(hash)) {
+        considered_k_cliques.insert(hash);
+        k_cliques.push_back(EdgesByIndices(combination));
+      }
     }
   }
 

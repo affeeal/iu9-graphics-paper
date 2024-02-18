@@ -198,7 +198,7 @@ TEST(GraphTest, TinyFromFile) {
   const Graph expected_graph(std::move(expected_vertices),
                              std::move(expected_edges));
 
-  const auto graph = Graph::FromDotFile(kDataPathPrefix + "tiny.dot");
+  const auto graph = Graph::FromFile(kDataPathPrefix + "tiny.dot");
 
   EXPECT_TRUE(expected_graph == *graph);
 }
@@ -286,7 +286,7 @@ TEST(GraphTest, CheckKQuasiPlanar_InvalidK) {
   EXPECT_ANY_THROW(graph.CheckKQuasiPlanar(2));
 }
 
-TEST(GraphTest, CheckKQuasiPlanar_Not3QuasiPlanar) {
+TEST(GraphTest, CheckKQuasiPlanar_4QuasiPlanar) {
   std::vector<VertexSptr> vertices;
   vertices.reserve(8);
 
@@ -352,17 +352,67 @@ TEST(GraphTest, CheckKQuasiPlanar_Not3QuasiPlanar) {
 
   const Graph graph(std::move(vertices), std::move(edges));
   const auto& edges_ref = graph.GetEdges();
-  const auto k_cliques = graph.CheckKQuasiPlanar(3);
 
-  ASSERT_EQ(k_cliques.size(), 2);
-  EXPECT_NE(
-      std::find_if(k_cliques.begin(), k_cliques.end(),
-                   CliqueCompare({edges_ref[0], edges_ref[4], edges_ref[5]})),
-      k_cliques.end());
-  EXPECT_NE(
-      std::find_if(k_cliques.begin(), k_cliques.end(),
-                   CliqueCompare({edges_ref[3], edges_ref[4], edges_ref[5]})),
-      k_cliques.end());
+  const auto _3_cliques = graph.CheckKQuasiPlanar(3);
+  ASSERT_EQ(_3_cliques.size(), 2);
+
+  std::vector<std::array<std::size_t, 3>> expected_3_cliques{
+      {0, 4, 5},
+      {3, 4, 5},
+  };
+
+  for (const auto& expected_3_clique : expected_3_cliques) {
+    EXPECT_NE(std::find_if(_3_cliques.begin(), _3_cliques.end(),
+                           CliqueCompare({edges_ref[expected_3_clique[0]],
+                                          edges_ref[expected_3_clique[1]],
+                                          edges_ref[expected_3_clique[2]]})),
+              _3_cliques.end());
+  }
+
+  const auto _4_cliques = graph.CheckKQuasiPlanar(4);
+  ASSERT_EQ(_4_cliques.size(), 0);
+}
+
+TEST(GraphTest, CheckKQuasiPlanar_5QuasiPlanar) {
+  const auto graph = Graph::FromFile(
+      kDataPathPrefix + "test_5_quasi_planar.tex", Graph::Filetype::kTex);
+  const auto& edges = graph->GetEdges();
+
+  const auto _3_cliques = graph->CheckKQuasiPlanar(3);
+  ASSERT_EQ(_3_cliques.size(), 8);
+
+  std::vector<std::array<std::size_t, 3>> expected_3_cliques{
+      {0, 3, 4}, {0, 1, 2}, {0, 1, 4}, {0, 2, 4},
+      {1, 2, 4}, {1, 2, 5}, {2, 4, 5}, {1, 4, 5},
+  };
+
+  for (const auto& expected_3_clique : expected_3_cliques) {
+    EXPECT_NE(std::find_if(_3_cliques.begin(), _3_cliques.end(),
+                           CliqueCompare({edges[expected_3_clique[0]],
+                                          edges[expected_3_clique[1]],
+                                          edges[expected_3_clique[2]]})),
+              _3_cliques.end());
+  }
+
+  const auto _4_cliques = graph->CheckKQuasiPlanar(4);
+  ASSERT_EQ(_4_cliques.size(), 2);
+
+  std::vector<std::array<std::size_t, 4>> expected_4_cliques{
+      {0, 1, 2, 4},
+      {1, 2, 4, 5},
+  };
+
+  for (const auto& expected_4_clique : expected_4_cliques) {
+    EXPECT_NE(std::find_if(_4_cliques.begin(), _4_cliques.end(),
+                           CliqueCompare({edges[expected_4_clique[0]],
+                                          edges[expected_4_clique[1]],
+                                          edges[expected_4_clique[2]],
+                                          edges[expected_4_clique[3]]})),
+              _4_cliques.end());
+  }
+
+  const auto _5_cliques = graph->CheckKQuasiPlanar(5);
+  ASSERT_EQ(_5_cliques.size(), 0);
 }
 
 }  // namespace
