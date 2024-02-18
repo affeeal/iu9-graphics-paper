@@ -51,7 +51,8 @@ class Graph {
    *
    * @return edges mutually crossed k or more times.
    */
-  std::vector<EdgeSptrConst> CheckKQuasiPlanar(const std::size_t k) const;
+  std::vector<std::vector<EdgeSptrConst>> CheckKQuasiPlanar(
+      const std::size_t k) const;
 
   /**
    * Check if the drawing belongs to the skewness-k class.
@@ -110,7 +111,7 @@ class Graph {
       const IntersectionsPuttingDown mode =
           IntersectionsPuttingDown::kSymmetric) const;
   template <typename Container = std::unordered_set<std::size_t>>
-  std::vector<EdgeSptrConst> GetEdgesByIndices(const Container &indices) const;
+  std::vector<EdgeSptrConst> EdgesByIndices(const Container &indices) const;
   std::vector<EdgeSptrConst> CheckAC(
       const ACPredicat &is_satisfying_angle) const;
 

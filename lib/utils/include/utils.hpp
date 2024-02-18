@@ -32,6 +32,19 @@ std::string GetFileDirectory(const std::string &filename);
 
 std::size_t Factorial(const std::size_t n);
 
+template <typename Key, typename Compare, typename Alloc,
+          template <typename, typename, typename> typename Set>
+std::vector<Key> AsVector(const Set<Key, Compare, Alloc> &s) {
+  std::vector<Key> result;
+  result.reserve(s.size());
+
+  for (const auto &value : s) {
+    result.push_back(value);
+  }
+
+  return result;
+}
+
 template <typename Value>
 std::vector<std::vector<Value>> Combinations(const std::vector<Value> &values,
                                              const std::size_t k) {

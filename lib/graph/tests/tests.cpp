@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <cassert>
 
 #include "edge.hpp"
 #include "graph.hpp"
@@ -12,12 +13,28 @@ namespace graph {
 
 namespace {
 
-std::function<bool(const EdgeSptrConst& other_edge)> CreateComparator(
+const std::string kDataPathPrefix = "../../../../data/";
+
+std::function<bool(const EdgeSptrConst& other_edge)> EdgeCompare(
     const EdgeSptrConst& edge) {
   return
       [&edge](const EdgeSptrConst& other_edge) { return *edge == *other_edge; };
 }
-const std::string kDataPathPrefix = "../../../../data/";
+
+std::function<bool(const std::vector<EdgeSptrConst>& other_clique)>
+CliqueCompare(const std::vector<EdgeSptrConst>& clique) {
+  return [&clique](const std::vector<EdgeSptrConst>& other_clique) {
+    assert(clique.size() == other_clique.size());
+
+    for (std::size_t i = 0; i < clique.size(); i++) {
+      if (*clique[i] != *other_clique[i]) {
+        return false;
+      }
+    }
+
+    return true;
+  };
+}
 
 TEST(GraphTest, SimpleGraphBuilding) {
   std::vector<VertexSptr> vertices;
@@ -251,15 +268,101 @@ TEST(GraphTest, CheckKPlanar_1Planar) {
   ASSERT_EQ(unsatisfying_edges_1_planar.size(), 2);
   EXPECT_NE(std::find_if(unsatisfying_edges_1_planar.begin(),
                          unsatisfying_edges_1_planar.end(),
-                         CreateComparator(edges_ref[0])),
+                         EdgeCompare(edges_ref[0])),
             unsatisfying_edges_1_planar.end());
   EXPECT_NE(std::find_if(unsatisfying_edges_1_planar.begin(),
                          unsatisfying_edges_1_planar.end(),
-                         CreateComparator(edges_ref[3])),
+                         EdgeCompare(edges_ref[3])),
             unsatisfying_edges_1_planar.end());
 
   const auto unsatisfying_edges_2_planar = graph.CheckKPlanar(2);
   ASSERT_EQ(unsatisfying_edges_2_planar.size(), 0);
+}
+
+TEST(GraphTest, CheckKQuasiPlanar_InvalidK) {
+  const Graph graph({}, {});
+  EXPECT_ANY_THROW(graph.CheckKQuasiPlanar(0));
+  EXPECT_ANY_THROW(graph.CheckKQuasiPlanar(1));
+  EXPECT_ANY_THROW(graph.CheckKQuasiPlanar(2));
+}
+
+TEST(GraphTest, CheckKQuasiPlanar_Not3QuasiPlanar) {
+  std::vector<VertexSptr> vertices;
+  vertices.reserve(8);
+
+  vertices.push_back(std::make_shared<Vertex>(1, 2, "0"));
+  vertices.push_back(std::make_shared<Vertex>(5, 2, "1"));
+  vertices.push_back(std::make_shared<Vertex>(1, 5, "2"));
+  vertices.push_back(std::make_shared<Vertex>(5, 5, "3"));
+  vertices.push_back(std::make_shared<Vertex>(3, 1, "4"));
+  vertices.push_back(std::make_shared<Vertex>(3, 7, "5"));
+  vertices.push_back(std::make_shared<Vertex>(4, 6, "6"));
+  vertices.push_back(std::make_shared<Vertex>(1, 1, "7"));
+
+  std::vector<EdgeSptr> edges;
+  edges.reserve(6);
+
+  {
+    std::vector<bezier::CurveUptr> curves;
+    curves.push_back(std::make_unique<bezier::Curve>(
+        std::vector<bezier::Point>{bezier::Point(1, 2), bezier::Point(5, 2)}));
+    edges.push_back(
+        std::make_shared<Edge>(vertices[0], vertices[1], std::move(curves)));
+  }
+
+  {
+    std::vector<bezier::CurveUptr> curves;
+    curves.push_back(std::make_unique<bezier::Curve>(
+        std::vector<bezier::Point>{bezier::Point(1, 2), bezier::Point(1, 5)}));
+    edges.push_back(
+        std::make_shared<Edge>(vertices[0], vertices[2], std::move(curves)));
+  }
+
+  {
+    std::vector<bezier::CurveUptr> curves;
+    curves.push_back(std::make_unique<bezier::Curve>(
+        std::vector<bezier::Point>{bezier::Point(5, 2), bezier::Point(5, 5)}));
+    edges.push_back(
+        std::make_shared<Edge>(vertices[1], vertices[3], std::move(curves)));
+  }
+
+  {
+    std::vector<bezier::CurveUptr> curves;
+    curves.push_back(std::make_unique<bezier::Curve>(
+        std::vector<bezier::Point>{bezier::Point(1, 5), bezier::Point(5, 5)}));
+    edges.push_back(
+        std::make_shared<Edge>(vertices[2], vertices[3], std::move(curves)));
+  }
+
+  {
+    std::vector<bezier::CurveUptr> curves;
+    curves.push_back(std::make_unique<bezier::Curve>(
+        std::vector<bezier::Point>{bezier::Point(3, 1), bezier::Point(3, 7)}));
+    edges.push_back(
+        std::make_shared<Edge>(vertices[4], vertices[5], std::move(curves)));
+  }
+
+  {
+    std::vector<bezier::CurveUptr> curves;
+    curves.push_back(std::make_unique<bezier::Curve>(
+        std::vector<bezier::Point>{bezier::Point(4, 6), bezier::Point(1, 1)}));
+    edges.push_back(
+        std::make_shared<Edge>(vertices[6], vertices[7], std::move(curves)));
+  }
+
+  const Graph graph(std::move(vertices), std::move(edges));
+  const auto& edges_ref = graph.GetEdges();
+  const auto k_cliques = graph.CheckKQuasiPlanar(3);
+
+  ASSERT_EQ(k_cliques.size(), 2);
+  EXPECT_NE(
+      std::find_if(k_cliques.begin(), k_cliques.end(),
+                   CliqueCompare({edges_ref[0], edges_ref[4], edges_ref[5]})),
+      k_cliques.end());
+  EXPECT_NE(
+      std::find_if(k_cliques.begin(), k_cliques.end(),
+                   CliqueCompare({edges_ref[3], edges_ref[4], edges_ref[5]})),
+      k_cliques.end());
 }
 
 }  // namespace

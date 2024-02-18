@@ -32,6 +32,85 @@ constexpr char kDrawCommandEnd = ';';
 
 constexpr std::size_t kCurveSize = 4;
 
+enum class CliqueComplementResult {
+  kFailure,
+  kSuccess,
+};
+
+std::unordered_set<std::size_t> RemainKQuasiPlanarUnsatisfyingEdges(
+    std::vector<std::unordered_set<std::size_t>> &intersections,
+    const std::size_t k) {
+  std::unordered_set<std::size_t> unsatisfying_edges;
+
+  for (std::size_t i = 0; i < intersections.size(); i++) {
+    if (intersections[i].size() >= k - 1) {
+      unsatisfying_edges.insert(i);
+    }
+  }
+
+  for (auto an_edge_erased = false; an_edge_erased; an_edge_erased = false) {
+    if (unsatisfying_edges.size() < k) {
+      return {};
+    }
+
+    for (const auto edge : unsatisfying_edges) {
+      for (const auto intersected_edge : intersections[edge]) {
+        if (!unsatisfying_edges.contains(intersected_edge)) {
+          intersections[edge].erase(intersected_edge);
+        }
+      }
+
+      if (intersections[edge].size() < k - 1) {
+        an_edge_erased = true;
+        unsatisfying_edges.erase(edge);
+      }
+    }
+  }
+
+  return unsatisfying_edges;
+}
+
+CliqueComplementResult PickCliques(
+    std::unordered_map<std::size_t, std::unique_ptr<std::set<std::size_t>>>
+        &cliques,
+    std::set<std::size_t> current_clique,  // exactly a copy
+    const std::vector<std::unordered_set<std::size_t>> &intersections,
+    const std::size_t current_edge, const std::size_t k) {
+  for (const auto edge : current_clique) {
+    if (!intersections[current_edge].contains(edge)) {
+      return CliqueComplementResult::kFailure;
+    }
+  }
+
+  current_clique.insert(current_edge);
+  auto is_final_edge = true;
+
+  for (const auto edge : intersections[current_edge]) {
+    if (current_clique.contains(edge)) {
+      continue;
+    }
+
+    if (PickCliques(cliques, current_clique, intersections, edge, k) ==
+        CliqueComplementResult::kSuccess) {
+      is_final_edge = false;
+    }
+  }
+
+  if (is_final_edge && current_clique.size() >= k) {
+    const auto hash =
+        boost::hash_range(current_clique.begin(), current_clique.end());
+
+    if (!cliques.contains(hash)) {
+      cliques[hash] =
+          std::make_unique<std::set<std::size_t>>(std::move(current_clique));
+    }
+
+    return CliqueComplementResult::kSuccess;
+  }
+
+  return CliqueComplementResult::kFailure;
+}
+
 template <typename T>
 void PrintIntersections(const T &intersections) {
   for (auto i = 0; i < intersections.size(); i++) {
@@ -266,40 +345,47 @@ std::vector<EdgeSptrConst> Graph::CheckKPlanar(const std::size_t k) const {
   return unsatisfying_edges;
 }
 
-std::vector<EdgeSptrConst> Graph::CheckKQuasiPlanar(const std::size_t k) const {
+std::vector<std::vector<EdgeSptrConst>> Graph::CheckKQuasiPlanar(
+    const std::size_t k) const {
   if (k < 3) {
     throw std::logic_error("Graph::CheckKQuasiPlanar: failed k >= 3");
   }
 
   auto intersections = CalculateIntersections();
-  std::unordered_set<std::size_t> unsatisfying_edges;
+  auto unsatisfying_edges =
+      RemainKQuasiPlanarUnsatisfyingEdges(intersections, k);
 
-  for (std::size_t i = 0; i < intersections.size(); i++) {
-    if (intersections[i].size() >= k - 1) {
-      unsatisfying_edges.insert(i);
+  if (unsatisfying_edges.empty()) {
+    return {};
+  }
+
+  std::unordered_map<std::size_t, std::unique_ptr<std::set<std::size_t>>>
+      cliques;
+  for (const auto edge : unsatisfying_edges) {
+    PickCliques(cliques, {}, intersections, edge, k);
+  }
+
+  std::cerr << "cliques:" << std::endl;
+  for (const auto &[_, clique] : cliques) {
+    for (const auto i : *clique) {
+      std::cerr << i << ' ';
+    }
+    std::cout << std::endl;
+  }
+
+  std::vector<std::vector<EdgeSptrConst>> k_cliques;
+  k_cliques.reserve(cliques.size());  // lower bound
+
+  for (const auto &[_, clique] : cliques) {
+    assert(clique->size() >= k);
+
+    for (const auto &combination :
+         utils::Combinations(utils::AsVector(*clique), k)) {
+      k_cliques.push_back(EdgesByIndices(combination));
     }
   }
 
-  for (auto edge_erased = false; edge_erased; edge_erased = false) {
-    if (unsatisfying_edges.size() < k) {
-      return {};
-    }
-
-    for (const auto edge : unsatisfying_edges) {
-      for (const auto intersected_edge : intersections[edge]) {
-        if (!unsatisfying_edges.contains(intersected_edge)) {
-          intersections[edge].erase(intersected_edge);
-        }
-      }
-
-      if (intersections[edge].size() < k - 1) {
-        edge_erased = true;
-        unsatisfying_edges.erase(edge);
-      }
-    }
-  }
-
-  return GetEdgesByIndices(unsatisfying_edges);
+  return k_cliques;
 }
 
 std::vector<EdgeSptrConst> Graph::CheckKSkewness(const std::size_t k) const {
@@ -340,7 +426,7 @@ std::vector<EdgeSptrConst> Graph::CheckKSkewness(const std::size_t k) const {
   }
 
   return (deletions_left >= 0 ? std::vector<EdgeSptrConst>{}
-                              : GetEdgesByIndices(edges_to_delete));
+                              : EdgesByIndices(edges_to_delete));
 }
 
 std::vector<EdgeSptrConst> Graph::CheckRAC() const {
@@ -382,11 +468,11 @@ std::vector<EdgeSptrConst> Graph::CheckAC(
     }
   }
 
-  return GetEdgesByIndices(unsatisfying_edges);
+  return EdgesByIndices(unsatisfying_edges);
 }
 
 template <typename Container>
-std::vector<EdgeSptrConst> Graph::GetEdgesByIndices(
+std::vector<EdgeSptrConst> Graph::EdgesByIndices(
     const Container &indices) const {
   std::vector<EdgeSptrConst> edges;
   edges.reserve(indices.size());
@@ -474,10 +560,10 @@ std::vector<KLGrid> Graph::CheckGridFree(const std::size_t k,
         }
 
         assert(l_groups.contains(hash));
-        const auto l_group = GetEdgesByIndices(l_groups.at(hash));
+        const auto l_group = EdgesByIndices(l_groups.at(hash));
 
         for (const auto &k_combination : utils::Combinations(k_group, k)) {
-          k_l_grids.emplace_back(GetEdgesByIndices(k_combination), l_group);
+          k_l_grids.emplace_back(EdgesByIndices(k_combination), l_group);
         }
       }
     }
