@@ -4,6 +4,8 @@
 #include <cassert>
 #include <iostream>
 
+#include "utils.hpp"
+
 namespace graph {
 
 Edge::Edge(VertexSptrConst start, VertexSptrConst end,
@@ -63,6 +65,30 @@ bool Edge::IsIntersect(const Edge &other) const {
   }
 
   return false;
+}
+
+bool Edge::IsStraightLine() const {
+  const auto &points = curves_.front()->GetPoints();
+  const auto start = points.front();
+  const utils::Vector main_direction(points[1] - start);
+
+  for (std::size_t i = 2; i < points.size(); i++) {
+    const utils::Vector direction(points[i] - start);
+    if (!direction.CollinearTo(main_direction)) {
+      return false;
+    }
+  }
+
+  for (std::size_t i = 1; i < curves_.size(); i++) {
+    for (const auto &point : curves_[i]->GetPoints()) {
+      const utils::Vector direction(point - start);
+      if (!direction.CollinearTo(main_direction)) {
+        return false;
+      }
+    }
+  }
+
+  return true;
 }
 
 bool Edge::operator==(const Edge &other) const {

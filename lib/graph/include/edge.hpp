@@ -17,6 +17,7 @@ class Edge {
        std::vector<bezier::CurveUptr> &&curves);
 
   bool IsIntersect(const Edge &other) const;
+  bool IsStraightLine() const;
 
   bool operator==(const Edge &other) const;
   friend std::ostream &operator<<(std::ostream &os, const Edge &edge);

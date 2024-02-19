@@ -14,6 +14,7 @@ class Point {
 
   bool operator==(const Point &other) const;
   Point operator+(const Point &other) const;
+  Point operator-(const Point &other) const;
   Point operator*(const double other) const;
   friend std::ostream &operator<<(std::ostream &os, const Point &p);
 

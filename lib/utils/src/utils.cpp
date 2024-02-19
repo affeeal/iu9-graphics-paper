@@ -9,7 +9,7 @@ std::size_t Combinations(const std::size_t n, const std::size_t k) {
   return Factorial(n) / Factorial(k) / Factorial(n - k);
 }
 
-DirectionVector::DirectionVector(const graph::Edge &edge) {
+Vector::Vector(const graph::Edge &edge) {
   assert(edge.GetCurves().size() == 1);
 
   const auto start = edge.GetStart();
@@ -19,18 +19,18 @@ DirectionVector::DirectionVector(const graph::Edge &edge) {
   y_ = end->GetY() - start->GetY();
 }
 
-double DirectionVector::CalculateAngle(const DirectionVector &other) const {
-  return std::acos(std::abs(CalculateScalarProduct(other)) / CalculateNorm() /
-                   other.CalculateNorm());
+double Vector::AngleWith(const Vector &other) const {
+  return std::acos(std::abs(ScalarProduct(other)) / Norm() / other.Norm());
 }
 
-double DirectionVector::CalculateNorm() const {
-  return std::sqrt(x_ * x_ + y_ * y_);
-}
+double Vector::Norm() const { return std::sqrt(x_ * x_ + y_ * y_); }
 
-double DirectionVector::CalculateScalarProduct(
-    const DirectionVector &other) const {
+double Vector::ScalarProduct(const Vector &other) const {
   return x_ * other.x_ + y_ * other.y_;
+}
+
+bool Vector::CollinearTo(const Vector &other) const {
+  return (x_ * other.y_ == other.x_ * y_);
 }
 
 std::string GetFileDirectory(const std::string &filename) {

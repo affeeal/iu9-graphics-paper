@@ -34,6 +34,13 @@ std::function<bool(const std::vector<EdgeSptrConst>&)> EdgesComparator(
   };
 }
 
+std::function<bool(const std::pair<EdgeSptrConst, EdgeSptrConst>&)>
+EdgePairComparator(const std::pair<EdgeSptrConst, EdgeSptrConst>& p1) {
+  return [&p1](const std::pair<EdgeSptrConst, EdgeSptrConst>& p2) {
+    return *p1.first == *p2.first && *p1.second == *p2.second;
+  };
+}
+
 TEST(GraphTest, SimpleGraphBuilding) {
   std::vector<VertexSptr> vertices;
   vertices.reserve(4);
@@ -445,9 +452,38 @@ TEST(GraphTest, CheckKSkewness_2Skewness) {
                            EdgesComparator({edges[s[0]]})),
               _1_skewness_unsat.end());
   }
-  
+
   const auto _2_skewness_unsat = graph->CheckKSkewness(2);
   ASSERT_EQ(_2_skewness_unsat.size(), 0);
+}
+
+TEST(GraphTest, CheckRAC_Success) {
+  const auto graph =
+      Graph::FromFile(kDataPathPrefix + "test_rac.tex", Graph::Filetype::kTex);
+  const auto rac_unsat_pairs = graph->CheckRAC();
+  ASSERT_EQ(rac_unsat_pairs.size(), 0);
+}
+
+TEST(GraphTest, CheckRAC_Failure) {
+  const auto graph = Graph::FromFile(kDataPathPrefix + "test_non_rac.tex",
+                                     Graph::Filetype::kTex);
+  const auto& edges = graph->GetEdges();
+
+  const auto rac_unsatisfying = graph->CheckRAC();
+  ASSERT_EQ(rac_unsatisfying.size(), 3);
+
+  std::vector<std::pair<EdgeSptrConst, EdgeSptrConst>>
+      expected_rac_unsatisfying{
+          {edges[1], edges[8]},
+          {edges[2], edges[9]},
+          {edges[9], edges[10]},
+      };
+
+  for (const auto& pair : expected_rac_unsatisfying) {
+    EXPECT_NE(std::find_if(rac_unsatisfying.begin(), rac_unsatisfying.end(),
+                           EdgePairComparator(pair)),
+              rac_unsatisfying.end());
+  }
 }
 
 }  // namespace

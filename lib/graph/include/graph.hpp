@@ -41,6 +41,8 @@ class Graph {
   static GraphUptr FromFile(const std::string &path,
                             const Filetype type = Filetype::kDot);
 
+  bool IsStraightLine() const;
+
   /**
    * Check if the drawing belongs to the k-planar class.
    *
@@ -82,7 +84,7 @@ class Graph {
    * @param alpha An angle in the range [0, pi / 2].
    * @return edges that intersect at a different angle.
    */
-  std::vector<EdgeSptrConst> CheckRAC() const;
+  std::vector<std::pair<EdgeSptrConst, EdgeSptrConst>> CheckRAC() const;
 
   /**
    * Check if the drawing belongs to the ACE-alpha class.
@@ -93,7 +95,8 @@ class Graph {
    * @param alpha An angle in the range [0, pi / 2].
    * @return edges that intersect at a different angle.
    */
-  std::vector<EdgeSptrConst> CheckACE(const double alpha) const;
+  std::vector<std::pair<EdgeSptrConst, EdgeSptrConst>> CheckACE(
+      const double alpha) const;
 
   /**
    * Check if the drawing belongs to the ACL-alpha class.
@@ -104,7 +107,8 @@ class Graph {
    * @param alpha An angle in the range [0, pi / 2].
    * @return edges that intersect at an angle less than alpha.
    */
-  std::vector<EdgeSptrConst> CheckACL(const double alpha) const;
+  std::vector<std::pair<EdgeSptrConst, EdgeSptrConst>> CheckACL(
+      const double alpha) const;
 
   std::vector<KLGrid> CheckGridFree(const std::size_t k,
                                     const std::size_t l) const;
@@ -119,7 +123,7 @@ class Graph {
           IntersectionsPuttingDown::kSymmetric) const;
   template <typename Container = std::unordered_set<std::size_t>>
   std::vector<EdgeSptrConst> EdgesByIndices(const Container &indices) const;
-  std::vector<EdgeSptrConst> CheckAC(
+  std::vector<std::pair<EdgeSptrConst, EdgeSptrConst>> CheckAC(
       const ACPredicat &is_satisfying_angle) const;
 
   std::vector<VertexSptr> vertices_;

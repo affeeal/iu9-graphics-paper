@@ -1,0 +1,51 @@
+\documentclass{article}
+\usepackage[x11names, svgnames, rgb]{xcolor}
+\usepackage[utf8]{inputenc}
+\usepackage{tikz}
+\usetikzlibrary{snakes,arrows,shapes}
+\usepackage{amsmath}
+%
+%
+
+%
+
+%
+
+\begin{document}
+\pagestyle{empty}
+%
+%
+%
+
+\enlargethispage{100cm}
+% Start of code
+\begin{tikzpicture}[>=latex',line join=bevel,]
+%%
+\node (0) at (20.0bp,30.0bp) [draw,ellipse] {$0$};
+  \node (1) at (40.0bp,10.0bp) [draw,ellipse] {$1$};
+  \node (2) at (90.0bp,20.0bp) [draw,ellipse] {$2$};
+  \node (3) at (120.0bp,50.0bp) [draw,ellipse] {$3$};
+  \node (4) at (100.0bp,50.0bp) [draw,ellipse] {$4$};
+  \node (5) at (70.0bp,60.0bp) [draw,ellipse] {$5$};
+  \node (6) at (60.0bp,30.0bp) [draw,ellipse] {$6$};
+  \node (7) at (40.0bp,50.0bp) [draw,ellipse] {$7$};
+  \draw [->] (0) ..controls (30.0bp,20.0bp) and (30.0bp,20.0bp)  .. (1);
+  \draw [->] (1) ..controls (60.0bp,20.0bp) and (80.0bp,30.0bp)  .. (3);
+  \draw [->] (2) ..controls (80.0bp,40.0bp) and (80.0bp,40.0bp)  .. (5);
+  \draw [->] (4) ..controls (80.0bp,40.0bp) and (80.0bp,40.0bp)  .. (6);
+  \draw [->] (7) ..controls (50.0bp,40.0bp) and (50.0bp,40.0bp)  .. (6);
+  \draw [->] (7) ..controls (30.0bp,40.0bp) and (30.0bp,40.0bp)  .. (0);
+  \draw [->] (6) ..controls (40.0bp,30.0bp) and (40.0bp,30.0bp)  .. (0);
+  \draw [->] (1) ..controls (40.0bp,30.0bp) and (40.0bp,30.0bp)  .. (7);
+  \draw [->] (2) ..controls (95.0bp,35.0bp) and (95.0bp,35.0bp)  .. (4);
+  \draw [->] (7) ..controls (70.0bp,50.0bp) and (70.0bp,50.0bp)  .. (4);
+  \draw [->] (6) ..controls (65.0bp,45.0bp) and (65.0bp,45.0bp)  .. (5);
+%
+\end{tikzpicture}
+% End of code
+
+%
+\end{document}
+%
+
+

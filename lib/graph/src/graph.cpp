@@ -462,46 +462,50 @@ std::vector<std::vector<EdgeSptrConst>> Graph::CheckKSkewness(
   return result;
 }
 
-std::vector<EdgeSptrConst> Graph::CheckRAC() const {
+std::vector<std::pair<EdgeSptrConst, EdgeSptrConst>> Graph::CheckRAC() const {
   return CheckACE(std::numbers::pi / 2);
 }
 
-std::vector<EdgeSptrConst> Graph::CheckACE(const double angle) const {
-  return CheckAC(
-      [angle](const double other_angle) { return other_angle == angle; });
+std::vector<std::pair<EdgeSptrConst, EdgeSptrConst>> Graph::CheckACE(
+    const double alpha) const {
+  return CheckAC([alpha](const double angle) { return angle == alpha; });
 }
 
-std::vector<EdgeSptrConst> Graph::CheckACL(const double angle) const {
-  return CheckAC(
-      [angle](const double other_angle) { return other_angle >= angle; });
+std::vector<std::pair<EdgeSptrConst, EdgeSptrConst>> Graph::CheckACL(
+    const double alpha) const {
+  return CheckAC([alpha](const double angle) { return angle >= alpha; });
 }
 
-std::vector<EdgeSptrConst> Graph::CheckAC(
+std::vector<std::pair<EdgeSptrConst, EdgeSptrConst>> Graph::CheckAC(
     const ACPredicat &is_satisfying_angle) const {
+  if (!IsStraightLine()) {
+    throw std::logic_error("Angle crossing check for non straight-line graph");
+  }
+
   const auto intersections =
       CalculateIntersections(IntersectionsPuttingDown::kNonSymmetric);
 
-  std::vector<utils::DirectionVector> direction_vectors;
-  direction_vectors.reserve(edges_.size());
+  std::vector<utils::Vector> directions;
+  directions.reserve(edges_.size());
   for (const auto &edge : edges_) {
-    direction_vectors.push_back(utils::DirectionVector(*edge));
+    directions.emplace_back(*edge);
   }
 
-  std::unordered_set<std::size_t> unsatisfying_edges;
+  std::vector<std::pair<EdgeSptrConst, EdgeSptrConst>> unsat_edge_pairs;
 
-  for (auto i = 0; i < intersections.size(); i++) {
+  for (std::size_t i = 0; i < intersections.size(); i++) {
     for (const auto j : intersections[i]) {
-      const auto angle =
-          direction_vectors[i].CalculateAngle(direction_vectors[j]);
+      const auto angle = directions[i].AngleWith(directions[j]);
+
       assert(0 <= angle && angle <= std::numbers::pi / 2);
+
       if (!is_satisfying_angle(angle)) {
-        unsatisfying_edges.insert(i);
-        unsatisfying_edges.insert(j);
+        unsat_edge_pairs.push_back({edges_[i], edges_[j]});
       }
     }
   }
 
-  return EdgesByIndices(unsatisfying_edges);
+  return unsat_edge_pairs;
 }
 
 template <typename Container>
@@ -603,6 +607,16 @@ std::vector<KLGrid> Graph::CheckGridFree(const std::size_t k,
   }
 
   return k_l_grids;
+}
+
+bool Graph::IsStraightLine() const {
+  for (const auto &edge : edges_) {
+    if (!edge->IsStraightLine()) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 }  // namespace graph

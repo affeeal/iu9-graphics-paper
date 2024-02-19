@@ -9,20 +9,20 @@
 #include <vector>
 
 #include "edge.hpp"
+#include "point.hpp"
 
 namespace utils {
 
-class DirectionVector {
+class Vector {
  public:
-  DirectionVector() = delete;
-  explicit DirectionVector(const graph::Edge &edge);
+  Vector() : x_(0), y_(0) {}
+  explicit Vector(const bezier::Point &p) : x_(p.GetX()), y_(p.GetY()) {}
+  explicit Vector(const graph::Edge &edge);
 
-  double CalculateAngle(const DirectionVector &other) const;
-  double CalculateScalarProduct(const DirectionVector &other) const;
-  double CalculateNorm() const;
-
-  double GetX() const { return x_; }
-  double GetY() const { return y_; }
+  double AngleWith(const Vector &other) const;
+  double ScalarProduct(const Vector &other) const;
+  double Norm() const;
+  bool CollinearTo(const Vector &other) const;
 
  private:
   double x_;
