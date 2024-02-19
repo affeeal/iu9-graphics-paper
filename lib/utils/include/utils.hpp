@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "edge.hpp"
@@ -32,10 +33,9 @@ std::string GetFileDirectory(const std::string &filename);
 
 std::size_t Factorial(const std::size_t n);
 
-template <typename Key, typename Compare, typename Alloc,
-          template <typename, typename, typename> typename Set>
-std::vector<Key> AsVector(const Set<Key, Compare, Alloc> &s) {
-  std::vector<Key> result;
+template <typename Set>
+std::vector<typename Set::key_type> AsVector(const Set &s) {
+  std::vector<typename Set::key_type> result;
   result.reserve(s.size());
 
   for (const auto &value : s) {
@@ -107,13 +107,13 @@ std::vector<Value> Intersect(const std::set<Value> &s1,
   return intersection;
 }
 
-template <typename Key, typename Value>
-std::vector<Value> UnorderedMapToValues(std::unordered_map<Key, Value> &&um) {
-  std::vector<Value> values;
-  values.reserve(um.size());
+template <typename Map>
+std::vector<typename Map::mapped_type> ToVector(Map&& m) {
+  std::vector<typename Map::mapped_type> values;
+  values.reserve(m.size());
 
-  for (auto &record : um) {
-    values.push_back(std::move(record.second));
+  for (auto &[_, value] : m) {
+    values.push_back(std::move(value));
   }
 
   return values;

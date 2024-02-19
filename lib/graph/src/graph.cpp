@@ -24,11 +24,12 @@ constexpr std::string_view kTikzpictureEnd = "\\end{tikzpicture}";
 constexpr std::string_view kNodeCommandStart = "\\node";
 constexpr std::string_view kDrawCommandStart = "\\draw";
 
-constexpr char kNodeStart = '(';
-constexpr char kNodeEnd = ')';
-constexpr char kMeasurementUnitStart = 'b';
-constexpr char kCoordinatesDivider = ',';
-constexpr char kDrawCommandEnd = ';';
+constexpr auto kNodeLabelStart = '{';
+constexpr auto kNodeStart = '(';
+constexpr auto kNodeEnd = ')';
+constexpr auto kMeasurementUnitStart = 'b';
+constexpr auto kCoordinatesDivider = ',';
+constexpr auto kDrawCommandEnd = ';';
 
 constexpr std::size_t kCurveSize = 4;
 
@@ -283,6 +284,7 @@ bool Graph::operator==(const Graph &other) const {
   return true;
 }
 
+// TODO: rewrite adequately
 GraphUptr Graph::FromFile(const std::string &path, const Filetype type) {
   if (type == Filetype::kDot) {
     const auto command =
@@ -319,7 +321,8 @@ GraphUptr Graph::FromFile(const std::string &path, const Filetype type) {
   while (std::getline(tex_file, line)) {
     if (line.find(kNodeCommandStart) != std::string::npos) {
       HandleNodeCommand(std::move(line), labels_to_vertices);
-    } else if (line.find(kDrawCommandStart) != std::string::npos) {
+    } else if (line.find(kDrawCommandStart) != std::string::npos &&
+               line.find(kNodeLabelStart) == std::string::npos) {
       HandleDrawCommand(std::move(line), edges, labels_to_vertices);
     } else if (line.find(kTikzpictureEnd) != std::string::npos) {
       break;
@@ -331,7 +334,7 @@ GraphUptr Graph::FromFile(const std::string &path, const Filetype type) {
     std::system(command.c_str());
   }
 
-  auto vertices = utils::UnorderedMapToValues(std::move(labels_to_vertices));
+  auto vertices = utils::ToVector(std::move(labels_to_vertices));
   return std::make_unique<Graph>(std::move(vertices), std::move(edges));
 }
 
@@ -417,9 +420,9 @@ std::vector<EdgeSptrConst> Graph::CheckKSkewness(const std::size_t k) const {
   auto deletions_left = k;
 
   while (true) {
-    auto edge_with_most_intersections = 0;
+    std::size_t edge_with_most_intersections = 0;
 
-    for (auto i = 0; i < intersections.size(); i++) {
+    for (std::size_t i = 0; i < intersections.size(); i++) {
       if (intersections[i].size() >
           intersections[edge_with_most_intersections].size()) {
         edge_with_most_intersections = i;
@@ -439,6 +442,12 @@ std::vector<EdgeSptrConst> Graph::CheckKSkewness(const std::size_t k) const {
     edges_to_delete.insert(edge_with_most_intersections);
     deletions_left--;
   }
+
+  if (deletions_left >= 0) {
+    return {};
+  }
+
+  const auto combinations = utils::Combinations(utils::AsVector(edges_to_delete), k); 
 
   return (deletions_left >= 0 ? std::vector<EdgeSptrConst>{}
                               : EdgesByIndices(edges_to_delete));
