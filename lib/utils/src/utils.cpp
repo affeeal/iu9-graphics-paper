@@ -5,12 +5,14 @@
 
 namespace utils {
 
-std::size_t Combinations(const std::size_t n, const std::size_t k) {
-  return Factorial(n) / Factorial(k) / Factorial(n - k);
-}
+Vector::Vector(const bezier::Point &point)
+    : x_(point.get_x()), y_(point.get_y()) {}
 
 Vector::Vector(const graph::Edge &edge) {
-  assert(edge.get_curves().size() == 1);
+  if (!edge.IsStraightLine()) {
+    throw std::logic_error(
+        "Cannot create direction vector for non straight-line edge");
+  }
 
   const auto start = edge.get_start();
   const auto end = edge.get_end();
@@ -33,17 +35,12 @@ bool Vector::CollinearTo(const Vector &other) const {
   return (x_ * other.y_ == other.x_ * y_);
 }
 
-std::string GetFileDirectory(const std::string &filename) {
-  int end = filename.size() - 1;
-  while (end >= 0 && filename[end] != '/') {
-    end--;
-  }
-
-  return (end < 0) ? "./" : filename.substr(0, end + 1);
-}
-
 std::size_t Factorial(const std::size_t n) {
   return (n == 1 || n == 0) ? 1 : n * Factorial(n - 1);
+}
+
+std::size_t Combinations(const std::size_t n, const std::size_t k) {
+  return Factorial(n) / Factorial(k) / Factorial(n - k);
 }
 
 }  // namespace utils

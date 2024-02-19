@@ -30,9 +30,12 @@ class Graph {
     kTex,
   };
 
-  Graph() = delete;
+  Graph() = default;
   Graph(std::vector<VertexSptr> &&vertices, std::vector<EdgeSptr> &&edges)
       : vertices_(std::move(vertices)), edges_(std::move(edges)) {}
+
+  const std::vector<VertexSptr> &get_vertices() const { return vertices_; }
+  const std::vector<EdgeSptr> &get_edges() const { return edges_; }
 
   // TODO: copy constructor, copy operator
 
@@ -40,8 +43,6 @@ class Graph {
 
   static GraphUptr FromFile(const std::string &path,
                             const Filetype type = Filetype::kDot);
-
-  bool IsStraightLine() const;
 
   std::vector<EdgeSptrConst> CheckKPlanar(const std::size_t k) const;
 
@@ -62,15 +63,16 @@ class Graph {
   std::vector<KLGrid> CheckGridFree(const std::size_t k,
                                     const std::size_t l) const;
 
-  const std::vector<VertexSptr> &GetVertices() const { return vertices_; }
-  const std::vector<EdgeSptr> &GetEdges() const { return edges_; }
+  bool IsStraightLine() const;
 
  private:
   template <typename Set = std::unordered_set<std::size_t>>
   std::vector<Set> CalculateIntersections(
       const WriteIntersections mode = WriteIntersections::kSymmetrically) const;
+
   template <typename Container = std::unordered_set<std::size_t>>
   std::vector<EdgeSptrConst> EdgesByIndices(const Container &indices) const;
+
   std::vector<std::pair<EdgeSptrConst, EdgeSptrConst>> CheckAC(
       const ACPredicat &is_satisfying_angle) const;
 

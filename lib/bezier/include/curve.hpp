@@ -7,7 +7,7 @@
 
 namespace bezier {
 
-extern const double kThreshold;
+constexpr double kThreshold = 10e-4;
 
 class Curve;
 

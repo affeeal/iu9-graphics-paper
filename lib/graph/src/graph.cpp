@@ -1,12 +1,9 @@
 #include "graph.hpp"
 
 #include <boost/functional/hash.hpp>
-#include <cassert>
 #include <fstream>
-#include <iostream>
 #include <numbers>
 #include <sstream>
-#include <stdexcept>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -17,14 +14,11 @@ namespace graph {
 
 namespace {
 
-using LabelToVertex = std::unordered_map<std::string, VertexSptr>;
-
 constexpr std::string_view kTikzpictureStart = "\\begin{tikzpicture}";
 constexpr std::string_view kTikzpictureEnd = "\\end{tikzpicture}";
 constexpr std::string_view kNodeCommandStart = "\\node";
 constexpr std::string_view kDrawCommandStart = "\\draw";
 
-constexpr auto kNodeLabelStart = '{';
 constexpr auto kNodeStart = '(';
 constexpr auto kNodeEnd = ')';
 constexpr auto kMeasurementUnitStart = 'b';
@@ -112,18 +106,6 @@ CliqueComplementResult PickCliques(
   return CliqueComplementResult::kFailure;
 }
 
-template <typename T>
-void PrintIntersections(const T &intersections) {
-  std::cerr << "INTERSECTIONS:\n";
-  for (auto i = 0; i < intersections.size(); i++) {
-    std::cerr << i << ": ";
-    for (const auto j : intersections[i]) {
-      std::cerr << j << " ";
-    }
-    std::cerr << std::endl;
-  }
-}
-
 std::vector<std::string> GetNodes(std::string &&command) {
   std::vector<std::string> nodes;
   std::stringstream ss(command);
@@ -189,8 +171,9 @@ std::pair<double, double> NodeToCoordinates(std::string &&node) {
   return std::make_pair(std::stod(std::move(x)), std::stod(std::move(y)));
 }
 
-void HandleNodeCommand(std::string &&command,
-                       LabelToVertex &labels_to_vertices) {
+void HandleNodeCommand(
+    std::string &&command,
+    std::unordered_map<std::string, VertexSptr> &labels_to_vertices) {
   auto nodes = GetNodes(std::move(command));
   assert(nodes.size() == 2);  // label and appropriate coordinates
 
@@ -200,7 +183,8 @@ void HandleNodeCommand(std::string &&command,
 }
 
 std::vector<bezier::Point> NodesToPoints(
-    std::vector<std::string> &&nodes, const LabelToVertex &labels_to_vertices) {
+    std::vector<std::string> &&nodes,
+    const std::unordered_map<std::string, VertexSptr> &labels_to_vertices) {
   std::vector<bezier::Point> points;
   points.reserve(nodes.size());
 
@@ -237,9 +221,14 @@ std::vector<bezier::CurveUptr> CurvesByPoints(
   return curves;
 }
 
-void HandleDrawCommand(std::string &&command, std::vector<EdgeSptr> &edges,
-                       const LabelToVertex &labels_to_vertices) {
+void HandleDrawCommand(
+    std::string &&command, std::vector<EdgeSptr> &edges,
+    const std::unordered_map<std::string, VertexSptr> &labels_to_vertices) {
   auto nodes = GetNodes(std::move(command));
+
+  if (nodes.size() == 1) {
+    return;  // ignore edge attribute
+  }
 
   assert(nodes.size() == kCurveSize ||
          nodes.size() > kCurveSize &&
@@ -256,27 +245,25 @@ void HandleDrawCommand(std::string &&command, std::vector<EdgeSptr> &edges,
 
 }  // namespace
 
-// NOTE: can be optimized with sorting
 bool Graph::operator==(const Graph &other) const {
   for (const auto &vertex : vertices_) {
-    auto compare = [&vertex](const VertexSptr &other_vertex) {
-      assert(vertex && other_vertex);
+    const auto compare = [&vertex](const VertexSptr &other_vertex) {
       return *vertex == *other_vertex;
     };
 
-    if (std::find_if(other.vertices_.begin(), other.vertices_.end(),
-                     std::move(compare)) == other.vertices_.end()) {
+    if (std::find_if(other.vertices_.begin(), other.vertices_.end(), compare) ==
+        other.vertices_.end()) {
       return false;
     }
   }
 
   for (const auto &edge : edges_) {
-    auto compare = [&edge](const EdgeSptr &other_edge) {
+    const auto compare = [&edge](const EdgeSptr &other_edge) {
       return *edge == *other_edge;
     };
 
-    if (std::find_if(other.edges_.begin(), other.edges_.end(),
-                     std::move(compare)) == other.edges_.end()) {
+    if (std::find_if(other.edges_.begin(), other.edges_.end(), compare) ==
+        other.edges_.end()) {
       return false;
     }
   }
@@ -296,7 +283,7 @@ GraphUptr Graph::FromFile(const std::string &path, const Filetype type) {
 
   if (type == Filetype::kDot) {
     tex_file.open(path + ".tex");
-  } else {  // type == Filetype::kTex
+  } else if (type == Filetype::kTex) {
     tex_file.open(path);
   }
 
@@ -315,14 +302,13 @@ GraphUptr Graph::FromFile(const std::string &path, const Filetype type) {
     throw std::runtime_error("Failed to find the tikzpicture start");
   }
 
-  LabelToVertex labels_to_vertices;
+  std::unordered_map<std::string, VertexSptr> labels_to_vertices;
   std::vector<EdgeSptr> edges;
 
   while (std::getline(tex_file, line)) {
     if (line.find(kNodeCommandStart) != std::string::npos) {
       HandleNodeCommand(std::move(line), labels_to_vertices);
-    } else if (line.find(kDrawCommandStart) != std::string::npos &&
-               line.find(kNodeLabelStart) == std::string::npos) {
+    } else if (line.find(kDrawCommandStart) != std::string::npos) {
       HandleDrawCommand(std::move(line), edges, labels_to_vertices);
     } else if (line.find(kTikzpictureEnd) != std::string::npos) {
       break;
@@ -344,7 +330,6 @@ std::vector<EdgeSptrConst> Graph::CheckKPlanar(const std::size_t k) const {
   }
 
   const auto intersections = CalculateIntersections();
-  PrintIntersections(intersections);
   std::vector<EdgeSptrConst> unsatisfying_edges;
 
   for (std::size_t i = 0; i < edges_.size(); i++) {
@@ -363,7 +348,6 @@ std::vector<std::vector<EdgeSptrConst>> Graph::CheckKQuasiPlanar(
   }
 
   auto intersections = CalculateIntersections();
-  PrintIntersections(intersections);
   auto unsatisfying_edges =
       RemainKQuasiPlanarUnsatisfyingEdges(intersections, k);
 
@@ -375,14 +359,6 @@ std::vector<std::vector<EdgeSptrConst>> Graph::CheckKQuasiPlanar(
       cliques;
   for (const auto edge : unsatisfying_edges) {
     PickCliques(cliques, {}, intersections, edge, k);
-  }
-
-  std::cerr << "cliques:" << std::endl;
-  for (const auto &[_, clique] : cliques) {
-    for (const auto i : *clique) {
-      std::cerr << i << ' ';
-    }
-    std::cout << std::endl;
   }
 
   std::vector<std::vector<EdgeSptrConst>> k_cliques;
@@ -421,7 +397,6 @@ std::vector<std::vector<EdgeSptrConst>> Graph::CheckKSkewness(
   int deletions_left = k;
 
   while (true) {
-    PrintIntersections(intersections);
     std::size_t edge_with_most_intersections = 0;
 
     for (std::size_t i = 0; i < intersections.size(); i++) {
@@ -478,10 +453,6 @@ std::vector<std::pair<EdgeSptrConst, EdgeSptrConst>> Graph::CheckACL(
 
 std::vector<std::pair<EdgeSptrConst, EdgeSptrConst>> Graph::CheckAC(
     const ACPredicat &is_satisfying_angle) const {
-  if (!IsStraightLine()) {
-    throw std::logic_error("Angle crossing check for non straight-line graph");
-  }
-
   const auto intersections =
       CalculateIntersections(WriteIntersections::kAsymmetrically);
 
@@ -491,7 +462,7 @@ std::vector<std::pair<EdgeSptrConst, EdgeSptrConst>> Graph::CheckAC(
     directions.emplace_back(*edge);
   }
 
-  std::vector<std::pair<EdgeSptrConst, EdgeSptrConst>> unsat_edge_pairs;
+  std::vector<std::pair<EdgeSptrConst, EdgeSptrConst>> unsatisfying_edge_pairs;
 
   for (std::size_t i = 0; i < intersections.size(); i++) {
     for (const auto j : intersections[i]) {
@@ -500,12 +471,91 @@ std::vector<std::pair<EdgeSptrConst, EdgeSptrConst>> Graph::CheckAC(
       assert(0 <= angle && angle <= std::numbers::pi / 2);
 
       if (!is_satisfying_angle(angle)) {
-        unsat_edge_pairs.push_back({edges_[i], edges_[j]});
+        unsatisfying_edge_pairs.push_back({edges_[i], edges_[j]});
       }
     }
   }
 
-  return unsat_edge_pairs;
+  return unsatisfying_edge_pairs;
+}
+
+std::vector<KLGrid> Graph::CheckGridFree(const std::size_t k,
+                                         const std::size_t l) const {
+  if (k == 0) {
+    throw std::logic_error("Graph::CheckGridFree: failed k >= 1");
+  }
+
+  if (l == 0) {
+    throw std::logic_error("Graph::CheckGridFree: failed l >= 1");
+  }
+
+  const auto intersections = CalculateIntersections<std::set<std::size_t>>();
+
+  std::vector<std::size_t> k_groups_candidates;
+  for (std::size_t i = 0; i < intersections.size(); i++) {
+    if (intersections[i].size() >= l) {
+      k_groups_candidates.push_back(i);
+    }
+  }
+
+  std::vector<KLGrid> k_l_grids;
+  for (std::size_t i = 0; i + k <= k_groups_candidates.size(); i++) {
+    // actually can store >= k elements in a group
+    std::unordered_map<std::size_t, std::unique_ptr<std::vector<std::size_t>>>
+        k_groups;
+    std::unordered_map<std::size_t, std::unique_ptr<std::vector<std::size_t>>>
+        l_groups;
+
+    for (std::size_t j = i + 1; j < k_groups_candidates.size(); j++) {
+      const auto intersection =
+          utils::Intersect(intersections[i], intersections[j]);
+
+      if (intersection.size() < l) {
+        continue;
+      }
+
+      for (auto &l_combination : utils::Combinations(intersection, l)) {
+        const auto hash =
+            boost::hash_range(l_combination.begin(), l_combination.end());
+
+        if (!l_groups.contains(hash)) {
+          l_groups[hash] = std::make_unique<std::vector<std::size_t>>(
+              std::move(l_combination));
+        }
+
+        if (!k_groups.contains(hash)) {
+          k_groups[hash] = std::make_unique<std::vector<std::size_t>>(
+              std::vector<std::size_t>{i, j});
+        } else {
+          k_groups[hash]->push_back(j);
+        }
+      }
+
+      for (const auto &[hash, k_group] : k_groups) {
+        if (k_group->size() < k) {
+          continue;
+        }
+
+        const auto l_group = EdgesByIndices(*l_groups.at(hash));
+
+        for (const auto &k_combination : utils::Combinations(*k_group, k)) {
+          k_l_grids.emplace_back(EdgesByIndices(k_combination), l_group);
+        }
+      }
+    }
+  }
+
+  return k_l_grids;
+}
+
+bool Graph::IsStraightLine() const {
+  for (const auto &edge : edges_) {
+    if (!edge->IsStraightLine()) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 template <typename Container>
@@ -529,8 +579,6 @@ std::vector<Set> Graph::CalculateIntersections(
   for (auto i = 0; i < edges_.size() - 1; i++) {
     for (auto j = i + 1; j < edges_.size(); j++) {
       if (edges_[i]->IsIntersect(*edges_[j])) {
-        std::cout << i << " and " << j << std::endl;
-        ;
         intersections[i].insert(j);
         if (mode == WriteIntersections::kSymmetrically) {
           intersections[j].insert(i);
@@ -540,83 +588,6 @@ std::vector<Set> Graph::CalculateIntersections(
   }
 
   return intersections;
-}
-
-std::vector<KLGrid> Graph::CheckGridFree(const std::size_t k,
-                                         const std::size_t l) const {
-  if (k == 0) {
-    throw std::logic_error("Graph::CheckGridFree: failed k >= 1");
-  }
-
-  if (l == 0) {
-    throw std::logic_error("Graph::CheckGridFree: failed l >= 1");
-  }
-
-  const auto intersections = CalculateIntersections<std::set<std::size_t>>();
-
-  std::vector<std::size_t> k_groups_candidates;
-  for (std::size_t i = 0; i < intersections.size(); i++) {
-    if (intersections[i].size() >= l) {
-      k_groups_candidates.push_back(i);
-    }
-  }
-
-  std::vector<KLGrid> k_l_grids;
-
-  for (std::size_t i = 0; i + k <= k_groups_candidates.size(); i++) {
-    // actually can store >= k elements in a group
-    std::unordered_map<std::size_t, std::vector<std::size_t>> k_groups;
-    std::unordered_map<std::size_t, std::vector<std::size_t>> l_groups;
-
-    for (std::size_t j = i + 1; j < k_groups_candidates.size(); j++) {
-      const auto intersection =
-          utils::Intersect(intersections[i], intersections[j]);
-
-      if (intersection.size() < l) {
-        continue;
-      }
-
-      for (const auto &l_combination : utils::Combinations(intersection, l)) {
-        const auto hash =
-            boost::hash_range(l_combination.begin(), l_combination.end());
-
-        if (!l_groups.contains(hash)) {
-          l_groups[hash] = l_combination;
-        }
-
-        if (!k_groups.contains(hash)) {
-          k_groups[hash] = {i, j};
-        } else {
-          k_groups[hash].push_back(j);
-        }
-      }
-
-      for (const auto &[hash, k_group] : k_groups) {
-        if (k_group.size() < k) {
-          continue;
-        }
-
-        assert(l_groups.contains(hash));
-        const auto l_group = EdgesByIndices(l_groups.at(hash));
-
-        for (const auto &k_combination : utils::Combinations(k_group, k)) {
-          k_l_grids.emplace_back(EdgesByIndices(k_combination), l_group);
-        }
-      }
-    }
-  }
-
-  return k_l_grids;
-}
-
-bool Graph::IsStraightLine() const {
-  for (const auto &edge : edges_) {
-    if (!edge->IsStraightLine()) {
-      return false;
-    }
-  }
-
-  return true;
 }
 
 }  // namespace graph

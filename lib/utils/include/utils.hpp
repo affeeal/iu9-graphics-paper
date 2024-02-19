@@ -15,8 +15,8 @@ namespace utils {
 
 class Vector {
  public:
-  Vector() : x_(0), y_(0) {}
-  explicit Vector(const bezier::Point &p) : x_(p.get_x()), y_(p.get_y()) {}
+  Vector() = default;
+  explicit Vector(const bezier::Point &point);
   explicit Vector(const graph::Edge &edge);
 
   double AngleWith(const Vector &other) const;
@@ -29,21 +29,7 @@ class Vector {
   double y_;
 };
 
-std::string GetFileDirectory(const std::string &filename);
-
 std::size_t Factorial(const std::size_t n);
-
-template <typename Set>
-std::vector<typename Set::key_type> AsVector(const Set &s) {
-  std::vector<typename Set::key_type> result;
-  result.reserve(s.size());
-
-  for (const auto &value : s) {
-    result.push_back(value);
-  }
-
-  return result;
-}
 
 std::size_t Combinations(const std::size_t n, const std::size_t k);
 
@@ -107,6 +93,18 @@ std::vector<Value> Intersect(const std::set<Value> &s1,
   }
 
   return intersection;
+}
+
+template <typename Set>
+std::vector<typename Set::key_type> AsVector(const Set &s) {
+  std::vector<typename Set::key_type> result;
+  result.reserve(s.size());
+
+  for (const auto &value : s) {
+    result.push_back(value);
+  }
+
+  return result;
 }
 
 template <typename Map>

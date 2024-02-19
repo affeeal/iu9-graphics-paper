@@ -9,8 +9,6 @@
 
 namespace bezier {
 
-const double kThreshold = 10e-4;
-
 namespace {
 
 TEST(PointTest, Addition) {

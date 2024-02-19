@@ -7,8 +7,6 @@
 #include "graph.hpp"
 #include "vertex.hpp"
 
-const double bezier::kThreshold = 10e-4;
-
 namespace graph {
 
 namespace {
@@ -86,7 +84,7 @@ TEST(GraphTest, SimpleGraphBuilding) {
   }
 
   const Graph graph(std::move(vertices), std::move(edges));
-  const auto& graph_edges = graph.GetEdges();
+  const auto& graph_edges = graph.get_edges();
 
   EXPECT_TRUE(graph_edges[2]->IsIntersect(*graph_edges[3]));
   EXPECT_TRUE(graph_edges[3]->IsIntersect(*graph_edges[2]));
@@ -143,7 +141,7 @@ TEST(GraphTest, CurvedGraphBuilding) {
   }
 
   const Graph graph(std::move(vertices), std::move(edges));
-  const auto& graph_edges = graph.GetEdges();
+  const auto& graph_edges = graph.get_edges();
 
   EXPECT_TRUE(graph_edges[0]->IsIntersect(*graph_edges[1]));
   EXPECT_FALSE(graph_edges[0]->IsIntersect(*graph_edges[2]));
@@ -267,7 +265,7 @@ TEST(GraphTest, CheckKPlanar_1Planar) {
   }
 
   const Graph graph(std::move(vertices), std::move(edges));
-  const auto& edges_ref = graph.GetEdges();
+  const auto& edges_ref = graph.get_edges();
   const auto unsatisfying_edges_1_planar = graph.CheckKPlanar(1);
 
   ASSERT_EQ(unsatisfying_edges_1_planar.size(), 2);
@@ -356,7 +354,7 @@ TEST(GraphTest, CheckKQuasiPlanar_4QuasiPlanar) {
   }
 
   const Graph graph(std::move(vertices), std::move(edges));
-  const auto& edges_ref = graph.GetEdges();
+  const auto& edges_ref = graph.get_edges();
 
   const auto _3_cliques = graph.CheckKQuasiPlanar(3);
   ASSERT_EQ(_3_cliques.size(), 2);
@@ -381,7 +379,7 @@ TEST(GraphTest, CheckKQuasiPlanar_4QuasiPlanar) {
 TEST(GraphTest, CheckKQuasiPlanar_5QuasiPlanar) {
   const auto graph = Graph::FromFile(
       kDataPathPrefix + "test_5_quasi_planar.tex", Graph::Filetype::kTex);
-  const auto& edges = graph->GetEdges();
+  const auto& edges = graph->get_edges();
 
   const auto _3_cliques = graph->CheckKQuasiPlanar(3);
   ASSERT_EQ(_3_cliques.size(), 8);
@@ -428,7 +426,7 @@ TEST(GraphTest, CheckKSkewness_InvalidK) {
 TEST(GraphTest, CheckKSkewness_1Skewness) {
   const auto graph = Graph::FromFile(kDataPathPrefix + "test_1_skewness.tex",
                                      Graph::Filetype::kTex);
-  const auto& edges = graph->GetEdges();
+  const auto& edges = graph->get_edges();
 
   const auto _1_skewness_unsat = graph->CheckKSkewness(1);
   ASSERT_EQ(_1_skewness_unsat.size(), 0);
@@ -437,7 +435,7 @@ TEST(GraphTest, CheckKSkewness_1Skewness) {
 TEST(GraphTest, CheckKSkewness_2Skewness) {
   const auto graph = Graph::FromFile(kDataPathPrefix + "test_2_skewness.tex",
                                      Graph::Filetype::kTex);
-  const auto& edges = graph->GetEdges();
+  const auto& edges = graph->get_edges();
 
   const auto _1_skewness_unsat = graph->CheckKSkewness(1);
   ASSERT_EQ(_1_skewness_unsat.size(), 2);
@@ -467,7 +465,7 @@ TEST(GraphTest, CheckRAC_Success) {
 TEST(GraphTest, CheckRAC_Failure) {
   const auto graph = Graph::FromFile(kDataPathPrefix + "test_non_rac.tex",
                                      Graph::Filetype::kTex);
-  const auto& edges = graph->GetEdges();
+  const auto& edges = graph->get_edges();
 
   const auto rac_unsatisfying = graph->CheckRAC();
   ASSERT_EQ(rac_unsatisfying.size(), 3);
