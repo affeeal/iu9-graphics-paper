@@ -15,19 +15,17 @@ namespace {
 
 const std::string kDataPathPrefix = "../../../../data/";
 
-std::function<bool(const EdgeSptrConst& other_edge)> EdgeCompare(
-    const EdgeSptrConst& edge) {
-  return
-      [&edge](const EdgeSptrConst& other_edge) { return *edge == *other_edge; };
+std::function<bool(const EdgeSptrConst&)> EdgeCompare(const EdgeSptrConst& e1) {
+  return [&e1](const EdgeSptrConst& e2) { return *e1 == *e2; };
 }
 
-std::function<bool(const std::vector<EdgeSptrConst>& other_clique)>
-CliqueCompare(const std::vector<EdgeSptrConst>& clique) {
-  return [&clique](const std::vector<EdgeSptrConst>& other_clique) {
-    assert(clique.size() == other_clique.size());
+std::function<bool(const std::vector<EdgeSptrConst>&)> EdgesComparator(
+    const std::vector<EdgeSptrConst>& s1) {
+  return [&s1](const std::vector<EdgeSptrConst>& s2) {
+    assert(s1.size() == s2.size());
 
-    for (std::size_t i = 0; i < clique.size(); i++) {
-      if (*clique[i] != *other_clique[i]) {
+    for (std::size_t i = 0; i < s1.size(); i++) {
+      if (*s1[i] != *s2[i]) {
         return false;
       }
     }
@@ -363,9 +361,9 @@ TEST(GraphTest, CheckKQuasiPlanar_4QuasiPlanar) {
 
   for (const auto& expected_3_clique : expected_3_cliques) {
     EXPECT_NE(std::find_if(_3_cliques.begin(), _3_cliques.end(),
-                           CliqueCompare({edges_ref[expected_3_clique[0]],
-                                          edges_ref[expected_3_clique[1]],
-                                          edges_ref[expected_3_clique[2]]})),
+                           EdgesComparator({edges_ref[expected_3_clique[0]],
+                                            edges_ref[expected_3_clique[1]],
+                                            edges_ref[expected_3_clique[2]]})),
               _3_cliques.end());
   }
 
@@ -388,9 +386,9 @@ TEST(GraphTest, CheckKQuasiPlanar_5QuasiPlanar) {
 
   for (const auto& expected_3_clique : expected_3_cliques) {
     EXPECT_NE(std::find_if(_3_cliques.begin(), _3_cliques.end(),
-                           CliqueCompare({edges[expected_3_clique[0]],
-                                          edges[expected_3_clique[1]],
-                                          edges[expected_3_clique[2]]})),
+                           EdgesComparator({edges[expected_3_clique[0]],
+                                            edges[expected_3_clique[1]],
+                                            edges[expected_3_clique[2]]})),
               _3_cliques.end());
   }
 
@@ -404,15 +402,52 @@ TEST(GraphTest, CheckKQuasiPlanar_5QuasiPlanar) {
 
   for (const auto& expected_4_clique : expected_4_cliques) {
     EXPECT_NE(std::find_if(_4_cliques.begin(), _4_cliques.end(),
-                           CliqueCompare({edges[expected_4_clique[0]],
-                                          edges[expected_4_clique[1]],
-                                          edges[expected_4_clique[2]],
-                                          edges[expected_4_clique[3]]})),
+                           EdgesComparator({edges[expected_4_clique[0]],
+                                            edges[expected_4_clique[1]],
+                                            edges[expected_4_clique[2]],
+                                            edges[expected_4_clique[3]]})),
               _4_cliques.end());
   }
 
   const auto _5_cliques = graph->CheckKQuasiPlanar(5);
   ASSERT_EQ(_5_cliques.size(), 0);
+}
+
+TEST(GraphTest, CheckKSkewness_InvalidK) {
+  const Graph graph({}, {});
+  EXPECT_ANY_THROW(graph.CheckKSkewness(0));
+}
+
+TEST(GraphTest, CheckKSkewness_1Skewness) {
+  const auto graph = Graph::FromFile(kDataPathPrefix + "test_1_skewness.tex",
+                                     Graph::Filetype::kTex);
+  const auto& edges = graph->GetEdges();
+
+  const auto _1_skewness_unsat = graph->CheckKSkewness(1);
+  ASSERT_EQ(_1_skewness_unsat.size(), 0);
+}
+
+TEST(GraphTest, CheckKSkewness_2Skewness) {
+  const auto graph = Graph::FromFile(kDataPathPrefix + "test_2_skewness.tex",
+                                     Graph::Filetype::kTex);
+  const auto& edges = graph->GetEdges();
+
+  const auto _1_skewness_unsat = graph->CheckKSkewness(1);
+  ASSERT_EQ(_1_skewness_unsat.size(), 2);
+
+  const std::vector<std::array<std::size_t, 1>> expected_1_skewness_unsat{
+      {2},
+      {4},
+  };
+
+  for (const auto& s : expected_1_skewness_unsat) {
+    EXPECT_NE(std::find_if(_1_skewness_unsat.begin(), _1_skewness_unsat.end(),
+                           EdgesComparator({edges[s[0]]})),
+              _1_skewness_unsat.end());
+  }
+  
+  const auto _2_skewness_unsat = graph->CheckKSkewness(2);
+  ASSERT_EQ(_2_skewness_unsat.size(), 0);
 }
 
 }  // namespace

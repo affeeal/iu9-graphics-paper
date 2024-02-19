@@ -5,6 +5,10 @@
 
 namespace utils {
 
+std::size_t Combinations(const std::size_t n, const std::size_t k) {
+  return Factorial(n) / Factorial(k) / Factorial(n - k);
+}
+
 DirectionVector::DirectionVector(const graph::Edge &edge) {
   assert(edge.GetCurves().size() == 1);
 

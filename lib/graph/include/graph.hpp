@@ -69,7 +69,8 @@ class Graph {
    * @return edges to remove if drawing is not skewness-k and empty set
    * otherwise.
    */
-  std::vector<EdgeSptrConst> CheckKSkewness(const std::size_t k) const;
+  std::vector<std::vector<EdgeSptrConst>> CheckKSkewness(
+      const std::size_t k) const;
 
   /**
    * Check if the drawing belongs to the RAC class.

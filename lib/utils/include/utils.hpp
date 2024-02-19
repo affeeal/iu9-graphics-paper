@@ -45,6 +45,8 @@ std::vector<typename Set::key_type> AsVector(const Set &s) {
   return result;
 }
 
+std::size_t Combinations(const std::size_t n, const std::size_t k);
+
 template <typename Value>
 std::vector<std::vector<Value>> Combinations(const std::vector<Value> &values,
                                              const std::size_t k) {
@@ -55,7 +57,7 @@ std::vector<std::vector<Value>> Combinations(const std::vector<Value> &values,
   }
 
   std::vector<std::vector<Value>> combinations;
-  combinations.reserve(Factorial(n) / Factorial(k) / Factorial(n - k));
+  combinations.reserve(Combinations(n, k));
 
   std::vector<bool> mask(k, true);
   mask.resize(n, false);
@@ -108,7 +110,7 @@ std::vector<Value> Intersect(const std::set<Value> &s1,
 }
 
 template <typename Map>
-std::vector<typename Map::mapped_type> ToVector(Map&& m) {
+std::vector<typename Map::mapped_type> ToVector(Map &&m) {
   std::vector<typename Map::mapped_type> values;
   values.reserve(m.size());
 

@@ -406,7 +406,8 @@ std::vector<std::vector<EdgeSptrConst>> Graph::CheckKQuasiPlanar(
   return k_cliques;
 }
 
-std::vector<EdgeSptrConst> Graph::CheckKSkewness(const std::size_t k) const {
+std::vector<std::vector<EdgeSptrConst>> Graph::CheckKSkewness(
+    const std::size_t k) const {
   if (k < 1) {
     throw std::logic_error("Graph::CheckKSkewness: failed k >= 1");
   }
@@ -417,9 +418,10 @@ std::vector<EdgeSptrConst> Graph::CheckKSkewness(const std::size_t k) const {
 
   auto intersections = CalculateIntersections();
   std::unordered_set<std::size_t> edges_to_delete;
-  auto deletions_left = k;
+  int deletions_left = k;
 
   while (true) {
+    PrintIntersections(intersections);
     std::size_t edge_with_most_intersections = 0;
 
     for (std::size_t i = 0; i < intersections.size(); i++) {
@@ -447,10 +449,17 @@ std::vector<EdgeSptrConst> Graph::CheckKSkewness(const std::size_t k) const {
     return {};
   }
 
-  const auto combinations = utils::Combinations(utils::AsVector(edges_to_delete), k); 
+  const auto combinations =
+      utils::Combinations(utils::AsVector(edges_to_delete), k);
 
-  return (deletions_left >= 0 ? std::vector<EdgeSptrConst>{}
-                              : EdgesByIndices(edges_to_delete));
+  std::vector<std::vector<EdgeSptrConst>> result;
+  result.reserve(combinations.size());
+
+  for (const auto &combination : combinations) {
+    result.push_back(EdgesByIndices(combination));
+  }
+
+  return result;
 }
 
 std::vector<EdgeSptrConst> Graph::CheckRAC() const {
