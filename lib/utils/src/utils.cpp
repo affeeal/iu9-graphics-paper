@@ -10,13 +10,13 @@ std::size_t Combinations(const std::size_t n, const std::size_t k) {
 }
 
 Vector::Vector(const graph::Edge &edge) {
-  assert(edge.GetCurves().size() == 1);
+  assert(edge.get_curves().size() == 1);
 
-  const auto start = edge.GetStart();
-  const auto end = edge.GetEnd();
+  const auto start = edge.get_start();
+  const auto end = edge.get_end();
 
-  x_ = end->GetX() - start->GetX();
-  y_ = end->GetY() - start->GetY();
+  x_ = end->get_x() - start->get_x();
+  y_ = end->get_y() - start->get_y();
 }
 
 double Vector::AngleWith(const Vector &other) const {

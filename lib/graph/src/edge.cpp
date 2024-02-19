@@ -1,7 +1,6 @@
 #include "edge.hpp"
 
 #include <algorithm>
-#include <cassert>
 #include <iostream>
 
 #include "utils.hpp"
@@ -13,83 +12,6 @@ Edge::Edge(VertexSptrConst start, VertexSptrConst end,
     : start_(std::move(start)),
       end_(std::move(end)),
       curves_(std::move(curves)) {}
-
-bool Edge::IsIntersect(const Edge &other) const {
-  // Curves may have common start or end point. Such points are not considered
-  // as intersection points.
-
-  const auto start = start_->AsPoint();
-  const auto end = end_->AsPoint();
-
-  const auto starts_match = (*start_ == *other.start_);
-  const auto start_mathes_end = (*start_ == *other.end_);
-  const auto end_matches_start = (*end_ == *other.start_);
-  const auto ends_match = (*end_ == *other.end_);
-
-  std::cerr << *this << ' ' << other << ' ' << starts_match << start_mathes_end
-            << end_matches_start << ends_match << std::endl;
-
-  const auto curves_back = curves_.size() - 1;
-  const auto other_curves_back = other.curves_.size() - 1;
-
-  for (std::size_t i = 0; i <= curves_back; i++) {
-    for (std::size_t j = 0; j <= other_curves_back; j++) {
-      if (i == 0 && (j == 0 && starts_match ||
-                     j == other_curves_back && start_mathes_end) ||
-          i == curves_back && (j == 0 && end_matches_start ||
-                               j == other_curves_back && ends_match)) {
-        const auto intersection_points =
-            curves_[i]->Intersect(*other.curves_[j]);
-        std::cout << "intersection points: ";
-        for (const auto &p : intersection_points) {
-          std::cout << p << ' ';
-        }
-        std::cout << std::endl;
-
-        // const auto &point_to_compare = (i == 0 ? start : end);
-        const auto is_approximately_equal = [&start,
-                                             &end](const bezier::Point &other) {
-          return start.IsInNeighborhood(other) || end.IsInNeighborhood(other);
-        };
-
-        if (std::find_if_not(
-                intersection_points.begin(), intersection_points.end(),
-                is_approximately_equal) != intersection_points.end()) {
-          return true;
-        };
-      } else if (curves_[i]->IsIntersect(*other.curves_[j])) {
-        std::cerr << i << " intersects " << j << std::endl;
-        return true;
-      }
-    }
-  }
-
-  return false;
-}
-
-bool Edge::IsStraightLine() const {
-  const auto &points = curves_.front()->GetPoints();
-  const auto start = points.front();
-  const utils::Vector main_direction(points[1] - start);
-
-  for (std::size_t i = 2; i < points.size(); i++) {
-    const utils::Vector direction(points[i] - start);
-    if (!direction.CollinearTo(main_direction)) {
-      return false;
-    }
-  }
-
-  for (std::size_t i = 1; i < curves_.size(); i++) {
-    for (const auto &point : curves_[i]->GetPoints()) {
-      const utils::Vector direction(point - start);
-      if (!direction.CollinearTo(main_direction)) {
-        return false;
-      }
-    }
-  }
-
-  return true;
-}
 
 bool Edge::operator==(const Edge &other) const {
   if (*start_ != *other.start_ || *end_ != *other.end_ ||
@@ -106,16 +28,75 @@ bool Edge::operator==(const Edge &other) const {
   return true;
 }
 
-std::ostream &operator<<(std::ostream &os, const Edge &edge) {
-  for (std::size_t i = 0; i < edge.curves_.size(); i++) {
-    std::cout << *edge.curves_[i];
+std::ostream &operator<<(std::ostream &os, const Edge &e) {
+  std::cout << '{' << *e.start_ << ", " << *e.end_ << ", [";
+  for (std::size_t i = 0; i < e.curves_.size() - 1; i++) {
+    std::cout << *e.curves_[i] << ", ";
+  }
+  std::cout << *e.curves_.back() << "]}";
 
-    if (i + 1 < edge.curves_.size()) {
-      std::cout << ", ";
+  return os;
+}
+
+bool Edge::IsIntersect(const Edge &e) const {
+  const auto start = start_->AsPoint();
+  const auto end = end_->AsPoint();
+
+  const auto starts_match = (*start_ == *e.start_);
+  const auto start_mathes_end = (*start_ == *e.end_);
+  const auto end_matches_start = (*end_ == *e.start_);
+  const auto ends_match = (*end_ == *e.end_);
+
+  const auto back_curve = curves_.size() - 1;
+  const auto e_back_curve = e.curves_.size() - 1;
+
+  for (std::size_t i = 0; i < curves_.size(); i++) {
+    for (std::size_t j = 0; j < e.curves_.size(); j++) {
+      if (i == 0 && (j == 0 && starts_match ||
+                     j == e_back_curve && start_mathes_end) ||
+          i == back_curve && (j == 0 && end_matches_start ||
+                              j == e_back_curve && ends_match)) {
+        const auto intersections = curves_[i]->Intersect(*e.curves_[j]);
+        const auto is_approximately_equal = [&start,
+                                             &end](const bezier::Point &p) {
+          return start.IsInNeighborhood(p) || end.IsInNeighborhood(p);
+        };
+
+        if (std::find_if_not(intersections.begin(), intersections.end(),
+                             is_approximately_equal) != intersections.end()) {
+          return true;
+        };
+      } else if (curves_[i]->IsIntersect(*e.curves_[j])) {
+        return true;
+      }
     }
   }
 
-  return os;
+  return false;
+}
+
+bool Edge::IsStraightLine() const {
+  const auto &points = curves_.front()->get_points();
+  const auto start = points.front();
+  const utils::Vector main_direction(points[1] - start);
+
+  for (std::size_t i = 2; i < points.size(); i++) {
+    const utils::Vector direction(points[i] - start);
+    if (!direction.CollinearTo(main_direction)) {
+      return false;
+    }
+  }
+
+  for (std::size_t i = 1; i < curves_.size(); i++) {
+    for (const auto &p : curves_[i]->get_points()) {
+      const utils::Vector direction(p - start);
+      if (!direction.CollinearTo(main_direction)) {
+        return false;
+      }
+    }
+  }
+
+  return true;
 }
 
 }  // namespace graph

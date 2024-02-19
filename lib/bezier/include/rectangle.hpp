@@ -12,16 +12,16 @@ using RectangleUptr = std::unique_ptr<Rectangle>;
 
 class Rectangle {
  public:
-  Rectangle() = delete;
+  Rectangle() = default;
   Rectangle(Point top_left, Point bottom_right);
 
-  double CalculateArea() const;
-  double CalculatePerimeter() const;
+  double Area() const;
+  double Perimeter() const;
   bool IsOverlap(const Rectangle &other) const;
-  Point CalculateCenter() const;
+  Point Center() const;
 
-  const Point &GetTopLeft() const { return top_left_; }
-  const Point &GetBottomRight() const { return bottom_right_; }
+  const Point &get_top_left() const { return top_left_; }
+  const Point &get_bottom_right() const { return bottom_right_; }
 
  private:
   Point top_left_;

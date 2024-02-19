@@ -12,19 +12,19 @@ using EdgeSptrConst = std::shared_ptr<const Edge>;
 
 class Edge {
  public:
-  Edge() = delete;
+  Edge() = default;
   Edge(VertexSptrConst start, VertexSptrConst end,
        std::vector<bezier::CurveUptr> &&curves);
 
+  bool operator==(const Edge &other) const;
+  friend std::ostream &operator<<(std::ostream &os, const Edge &e);
+
+  const VertexSptrConst &get_start() const { return start_; }
+  const VertexSptrConst &get_end() const { return end_; }
+  const std::vector<bezier::CurveUptr> &get_curves() const { return curves_; }
+
   bool IsIntersect(const Edge &other) const;
   bool IsStraightLine() const;
-
-  bool operator==(const Edge &other) const;
-  friend std::ostream &operator<<(std::ostream &os, const Edge &edge);
-
-  VertexSptrConst GetStart() const { return start_; }
-  VertexSptrConst GetEnd() const { return end_; }
-  const std::vector<bezier::CurveUptr> &GetCurves() const { return curves_; }
 
  private:
   VertexSptrConst start_;

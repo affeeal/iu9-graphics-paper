@@ -16,7 +16,7 @@ namespace utils {
 class Vector {
  public:
   Vector() : x_(0), y_(0) {}
-  explicit Vector(const bezier::Point &p) : x_(p.GetX()), y_(p.GetY()) {}
+  explicit Vector(const bezier::Point &p) : x_(p.get_x()), y_(p.get_y()) {}
   explicit Vector(const graph::Edge &edge);
 
   double AngleWith(const Vector &other) const;

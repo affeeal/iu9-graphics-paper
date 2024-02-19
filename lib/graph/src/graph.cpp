@@ -207,7 +207,7 @@ std::vector<bezier::Point> NodesToPoints(
   for (auto i = 0; i < nodes.size(); i++) {
     if (i == 0 || i == nodes.size() - 1) {
       const auto &vertex = labels_to_vertices.at(std::move(nodes[i]));
-      points.push_back(bezier::Point(vertex->GetX(), vertex->GetY()));
+      points.push_back(bezier::Point(vertex->get_x(), vertex->get_y()));
     } else {
       const auto coordinates = NodeToCoordinates(std::move(nodes[i]));
       points.push_back(bezier::Point(coordinates.first, coordinates.second));
@@ -483,7 +483,7 @@ std::vector<std::pair<EdgeSptrConst, EdgeSptrConst>> Graph::CheckAC(
   }
 
   const auto intersections =
-      CalculateIntersections(IntersectionsPuttingDown::kNonSymmetric);
+      CalculateIntersections(WriteIntersections::kAsymmetrically);
 
   std::vector<utils::Vector> directions;
   directions.reserve(edges_.size());
@@ -523,7 +523,7 @@ std::vector<EdgeSptrConst> Graph::EdgesByIndices(
 
 template <typename Set>
 std::vector<Set> Graph::CalculateIntersections(
-    const IntersectionsPuttingDown mode) const {
+    const WriteIntersections mode) const {
   std::vector<Set> intersections(edges_.size());
 
   for (auto i = 0; i < edges_.size() - 1; i++) {
@@ -532,7 +532,7 @@ std::vector<Set> Graph::CalculateIntersections(
         std::cout << i << " and " << j << std::endl;
         ;
         intersections[i].insert(j);
-        if (mode == IntersectionsPuttingDown::kSymmetric) {
+        if (mode == WriteIntersections::kSymmetrically) {
           intersections[j].insert(i);
         }
       }

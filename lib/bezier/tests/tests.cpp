@@ -20,14 +20,14 @@ TEST(PointTest, Addition) {
 TEST(PointTest, MultiplicationByANumber) {
   const auto point = Point(0.4, 0.8) * 0.2;
 
-  EXPECT_DOUBLE_EQ(point.GetX(), 0.08);
-  EXPECT_DOUBLE_EQ(point.GetY(), 0.16);
+  EXPECT_DOUBLE_EQ(point.get_x(), 0.08);
+  EXPECT_DOUBLE_EQ(point.get_y(), 0.16);
 }
 
 TEST(RectangleTest, CalculateArea) {
   const Rectangle rectangle(Point(0.1, 0.6), Point(0.5, 0.3));
 
-  EXPECT_DOUBLE_EQ(rectangle.CalculateArea(), 0.12);
+  EXPECT_DOUBLE_EQ(rectangle.Area(), 0.12);
 }
 
 TEST(RectangleTest, NoOverlap) {
@@ -64,28 +64,28 @@ TEST(RectangleTest, OverlapNested) {
 
 TEST(CurveTest, LinearCurveBoundingBox) {
   const Curve curve(std::vector<Point>{Point(0.6, 0.5), Point(0.4, 0.3)});
-  const auto box = curve.CalculateBoundingBox();
+  const auto box = curve.BoundingBox();
 
-  EXPECT_EQ(box->GetTopLeft(), Point(0.4, 0.5));
-  EXPECT_EQ(box->GetBottomRight(), Point(0.6, 0.3));
+  EXPECT_EQ(box->get_top_left(), Point(0.4, 0.5));
+  EXPECT_EQ(box->get_bottom_right(), Point(0.6, 0.3));
 }
 
 TEST(CurveTest, QuadraticCurveBoundingBox) {
   const Curve curve(
       std::vector<Point>{Point(0.2, 0.4), Point(0.4, 0.2), Point(0.6, 0.4)});
-  const auto box = curve.CalculateBoundingBox();
+  const auto box = curve.BoundingBox();
 
-  EXPECT_EQ(box->GetTopLeft(), Point(0.2, 0.4));
-  EXPECT_EQ(box->GetBottomRight(), Point(0.6, 0.2));
+  EXPECT_EQ(box->get_top_left(), Point(0.2, 0.4));
+  EXPECT_EQ(box->get_bottom_right(), Point(0.6, 0.2));
 }
 
 TEST(CurveTest, QubicCurveBoundingBox) {
   const Curve curve(std::vector<Point>{Point(0.1, 0.1), Point(0.4, 0.2),
                                        Point(0.6, 0.6), Point(0.4, 0.4)});
-  const auto box = curve.CalculateBoundingBox();
+  const auto box = curve.BoundingBox();
 
-  EXPECT_EQ(box->GetTopLeft(), Point(0.1, 0.6));
-  EXPECT_EQ(box->GetBottomRight(), Point(0.6, 0.1));
+  EXPECT_EQ(box->get_top_left(), Point(0.1, 0.6));
+  EXPECT_EQ(box->get_bottom_right(), Point(0.6, 0.1));
 }
 
 TEST(CurveTest, SplitLinearCurve) {
@@ -95,9 +95,9 @@ TEST(CurveTest, SplitLinearCurve) {
   ASSERT_TRUE(split.first);
   ASSERT_TRUE(split.second);
 
-  EXPECT_THAT(split.first->GetPoints(),
+  EXPECT_THAT(split.first->get_points(),
               testing::ElementsAre(Point(1, 1), Point(4, 2)));
-  EXPECT_THAT(split.second->GetPoints(),
+  EXPECT_THAT(split.second->get_points(),
               testing::ElementsAre(Point(7, 3), Point(4, 2)));
 }
 
@@ -109,10 +109,10 @@ TEST(CurveTest, SplitQuadraticCurve) {
   ASSERT_TRUE(split.second);
 
   EXPECT_THAT(
-      split.first->GetPoints(),
+      split.first->get_points(),
       testing::ElementsAre(Point(1, 1), Point(4, 2), Point(5.25, 3.75)));
   EXPECT_THAT(
-      split.second->GetPoints(),
+      split.second->get_points(),
       testing::ElementsAre(Point(6, 8), Point(6.5, 5.5), Point(5.25, 3.75)));
 }
 
@@ -124,10 +124,10 @@ TEST(CurveTest, SplitQubicCurve) {
   ASSERT_TRUE(split.first);
   ASSERT_TRUE(split.second);
 
-  EXPECT_THAT(split.first->GetPoints(),
+  EXPECT_THAT(split.first->get_points(),
               testing::ElementsAre(Point(1, 1), Point(4, 2), Point(5.25, 3.75),
                                    Point(5.25, 4.625)));
-  EXPECT_THAT(split.second->GetPoints(),
+  EXPECT_THAT(split.second->get_points(),
               testing::ElementsAre(Point(2, 3), Point(4, 5.5), Point(5.25, 5.5),
                                    Point(5.25, 4.625)));
 }
