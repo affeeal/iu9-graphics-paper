@@ -1,9 +1,12 @@
 #include "graph.hpp"
 
 #include <boost/functional/hash.hpp>
+#include <cassert>
 #include <fstream>
+#include <iostream>
 #include <numbers>
 #include <sstream>
+#include <stdexcept>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -245,6 +248,18 @@ void HandleDrawCommand(
 
 }  // namespace
 
+Graph::Graph(const std::vector<Vertex> &vertices) {
+  for (const auto &vertex : vertices) {
+    vertices_.push_back(std::make_shared<Vertex>(vertex));
+  }
+}
+
+Graph::Graph(std::vector<Vertex> &&vertices) {
+  for (auto &vertex : vertices) {
+    vertices_.push_back(std::make_shared<Vertex>(std::move(vertex)));
+  }
+}
+
 bool Graph::operator==(const Graph &other) const {
   for (const auto &vertex : vertices_) {
     const auto compare = [&vertex](const VertexSptr &other_vertex) {
@@ -322,6 +337,21 @@ GraphUptr Graph::FromFile(const std::string &path, const Filetype type) {
 
   auto vertices = utils::ToVector(std::move(labels_to_vertices));
   return std::make_unique<Graph>(std::move(vertices), std::move(edges));
+}
+
+void Graph::AddEdge(const std::size_t start, const std::size_t end) {
+  if (start >= vertices_.size() || end >= vertices_.size()) {
+    throw std::out_of_range("Vertex index is out of rangle");
+  }
+
+  edges_.push_back(std::make_shared<Edge>(vertices_[start], vertices_[end]));
+}
+
+void Graph::AddEdges(
+    const std::vector<std::pair<std::size_t, std::size_t>> &vertex_pairs) {
+  for (const auto &[start, end] : vertex_pairs) {
+    AddEdge(start, end);
+  }
 }
 
 std::vector<EdgeSptrConst> Graph::CheckKPlanar(const std::size_t k) const {

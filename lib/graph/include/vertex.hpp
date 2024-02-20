@@ -14,6 +14,9 @@ using VertexSptrConst = std::shared_ptr<const Vertex>;
 class Vertex {
  public:
   Vertex() = default;
+  Vertex(const Vertex& other);
+  Vertex(Vertex&& other);
+
   Vertex(const double x, const double y);
   Vertex(const double x, const double y, const std::string& label);
 

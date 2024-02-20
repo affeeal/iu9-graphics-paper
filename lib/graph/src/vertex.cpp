@@ -4,6 +4,12 @@
 
 namespace graph {
 
+Vertex::Vertex(const Vertex& other)
+    : x_(other.x_), y_(other.y_), label_(other.label_) {}
+
+Vertex::Vertex(Vertex&& other)
+    : x_(other.x_), y_(other.y_), label_(std::move(other.label_)) {}
+
 Vertex::Vertex(const double x, const double y) : x_(x), y_(y), label_() {}
 
 Vertex::Vertex(const double x, const double y, const std::string& label)

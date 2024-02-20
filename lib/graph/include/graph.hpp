@@ -31,18 +31,27 @@ class Graph {
   };
 
   Graph() = default;
+  // TODO: copy constructor
+
+  Graph(const std::vector<Vertex> &vertices);
+  Graph(std::vector<Vertex> &&vertices);
   Graph(std::vector<VertexSptr> &&vertices, std::vector<EdgeSptr> &&edges)
       : vertices_(std::move(vertices)), edges_(std::move(edges)) {}
+
+  // TODO: copy operator
+  bool operator==(const Graph &other) const;
 
   const std::vector<VertexSptr> &get_vertices() const { return vertices_; }
   const std::vector<EdgeSptr> &get_edges() const { return edges_; }
 
-  // TODO: copy constructor, copy operator
-
-  bool operator==(const Graph &other) const;
-
   static GraphUptr FromFile(const std::string &path,
                             const Filetype type = Filetype::kDot);
+
+  void AddEdge(const std::size_t start, const std::size_t end);
+  void AddEdges(
+      const std::vector<std::pair<std::size_t, std::size_t>> &vertex_pairs);
+
+  bool IsStraightLine() const;
 
   std::vector<EdgeSptrConst> CheckKPlanar(const std::size_t k) const;
 
@@ -62,8 +71,6 @@ class Graph {
 
   std::vector<KLGrid> CheckGridFree(const std::size_t k,
                                     const std::size_t l) const;
-
-  bool IsStraightLine() const;
 
  private:
   template <typename Set = std::unordered_set<std::size_t>>

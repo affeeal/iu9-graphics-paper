@@ -3,9 +3,17 @@
 #include <algorithm>
 #include <iostream>
 
+#include "curve.hpp"
+#include "point.hpp"
 #include "utils.hpp"
 
 namespace graph {
+
+Edge::Edge(VertexSptrConst start, VertexSptrConst end)
+    : start_(start), end_(end) {
+  std::vector<bezier::Point> points{start->AsPoint(), end->AsPoint()};
+  curves_.push_back(std::make_unique<bezier::Curve>(std::move(points)));
+}
 
 Edge::Edge(VertexSptrConst start, VertexSptrConst end,
            std::vector<bezier::CurveUptr> &&curves)

@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 
 #include "edge.hpp"
 #include "graph.hpp"
@@ -481,6 +482,41 @@ TEST(GraphTest, CheckRAC_Failure) {
     EXPECT_NE(std::find_if(rac_unsatisfying.begin(), rac_unsatisfying.end(),
                            EdgePairComparator(pair)),
               rac_unsatisfying.end());
+  }
+}
+
+TEST(GraphTest, CheckAC) {
+  std::vector<Vertex> vertices{{1, 1, "0"}, {3, 1, "1"}, {5, 2, "2"},
+                               {7, 4, "3"}, {5, 4, "4"}, {3, 4, "5"}};
+  Graph graph(std::move(vertices));
+  graph.AddEdges({{0, 3}, {1, 5}, {2, 4}, {4, 5}});
+
+  const auto alpha = std::acos(1 / std::sqrt(5));
+  auto unsatisfying_edge_pairs = graph.CheckACE(alpha);
+  ASSERT_EQ(unsatisfying_edge_pairs.size(), 0);
+
+  graph.AddEdges({{0, 2}, {1, 4}});
+  unsatisfying_edge_pairs = graph.CheckACE(alpha);
+  ASSERT_EQ(unsatisfying_edge_pairs.size(), 3);
+
+  const auto& edges = graph.get_edges();
+  std::vector<std::pair<EdgeSptrConst, EdgeSptrConst>> edge_pairs{
+      {edges[1], edges[4]}, {edges[4], edges[5]}, {edges[0], edges[5]}};
+  for (const auto& edge_pair : edge_pairs) {
+    EXPECT_NE(std::find_if(unsatisfying_edge_pairs.begin(),
+                           unsatisfying_edge_pairs.end(),
+                           EdgePairComparator(edge_pair)),
+              unsatisfying_edge_pairs.end());
+  }
+
+  unsatisfying_edge_pairs = graph.CheckACL(alpha);
+  ASSERT_EQ(unsatisfying_edge_pairs.size(), 2);
+  edge_pairs = {{edges[4], edges[5]}, {edges[0], edges[5]}};
+  for (const auto& edge_pair : edge_pairs) {
+    EXPECT_NE(std::find_if(unsatisfying_edge_pairs.begin(),
+                           unsatisfying_edge_pairs.end(),
+                           EdgePairComparator(edge_pair)),
+              unsatisfying_edge_pairs.end());
   }
 }
 

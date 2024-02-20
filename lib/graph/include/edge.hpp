@@ -13,6 +13,7 @@ using EdgeSptrConst = std::shared_ptr<const Edge>;
 class Edge {
  public:
   Edge() = default;
+  Edge(VertexSptrConst start, VertexSptrConst end);
   Edge(VertexSptrConst start, VertexSptrConst end,
        std::vector<bezier::CurveUptr> &&curves);
 
