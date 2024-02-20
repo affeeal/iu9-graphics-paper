@@ -38,9 +38,11 @@ bool Edge::operator==(const Edge &other) const {
 
 std::ostream &operator<<(std::ostream &os, const Edge &e) {
   std::cout << '{' << *e.start_ << ", " << *e.end_ << ", [";
+
   for (std::size_t i = 0; i < e.curves_.size() - 1; i++) {
     std::cout << *e.curves_[i] << ", ";
   }
+
   std::cout << *e.curves_.back() << "]}";
 
   return os;

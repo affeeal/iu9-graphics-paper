@@ -94,6 +94,8 @@ struct KLGrid {
   KLGrid(const std::vector<EdgeSptrConst> &k_group,
          const std::vector<EdgeSptrConst> &l_group)
       : k_group(k_group), l_group(l_group) {}
+
+  friend std::ostream &operator<<(std::ostream &os, const KLGrid &grid);
 };
 
 }  // namespace graph

@@ -528,14 +528,18 @@ std::vector<KLGrid> Graph::CheckGridFree(const std::size_t k,
     }
   }
 
-  std::vector<KLGrid> k_l_grids;
-  for (std::size_t i = 0; i + k <= k_groups_candidates.size(); i++) {
-    // actually can store >= k elements in a group
-    std::unordered_map<std::size_t, std::unique_ptr<std::vector<std::size_t>>>
-        k_groups;
-    std::unordered_map<std::size_t, std::unique_ptr<std::vector<std::size_t>>>
-        l_groups;
+  std::unordered_map<std::size_t, std::unique_ptr<std::vector<std::size_t>>>
+      l_groups;
+  std::unordered_map<std::size_t, std::unique_ptr<std::vector<std::size_t>>>
+      k_groups;
 
+  std::unordered_map<std::size_t,
+                     std::unique_ptr<std::unordered_set<std::size_t>>>
+      k_l_hashes;
+
+  for (std::size_t i = 0; i + k <= k_groups_candidates.size(); i++) {
+    std::unordered_map<std::size_t, std::unique_ptr<std::vector<std::size_t>>>
+        intermidiate_k_groups;
     for (std::size_t j = i + 1; j < k_groups_candidates.size(); j++) {
       const auto intersection =
           utils::Intersect(intersections[i], intersections[j]);
@@ -553,25 +557,48 @@ std::vector<KLGrid> Graph::CheckGridFree(const std::size_t k,
               std::move(l_combination));
         }
 
-        if (!k_groups.contains(hash)) {
-          k_groups[hash] = std::make_unique<std::vector<std::size_t>>(
-              std::vector<std::size_t>{i, j});
+        if (!intermidiate_k_groups.contains(hash)) {
+          intermidiate_k_groups[hash] =
+              std::make_unique<std::vector<std::size_t>>(
+                  std::vector<std::size_t>{i, j});
         } else {
-          k_groups[hash]->push_back(j);
+          intermidiate_k_groups[hash]->push_back(j);
         }
       }
+    }
 
-      for (const auto &[hash, k_group] : k_groups) {
-        if (k_group->size() < k) {
-          continue;
+    for (const auto &[l_hash, intermidiate_k_group] : intermidiate_k_groups) {
+      if (intermidiate_k_group->size() < k) {
+        continue;
+      }
+
+      for (auto &k_group : utils::Combinations(*intermidiate_k_group, k)) {
+        const auto k_hash = boost::hash_range(k_group.begin(), k_group.end());
+
+        if (!k_groups.contains(k_hash)) {
+          k_groups[k_hash] =
+              std::make_unique<std::vector<std::size_t>>(std::move(k_group));
         }
 
-        const auto l_group = EdgesByIndices(*l_groups.at(hash));
-
-        for (const auto &k_combination : utils::Combinations(*k_group, k)) {
-          k_l_grids.emplace_back(EdgesByIndices(k_combination), l_group);
+        if (auto it = k_l_hashes.find(k_hash); it == k_l_hashes.end()) {
+          k_l_hashes[k_hash] =
+              std::make_unique<std::unordered_set<std::size_t>>(
+                  std::unordered_set<std::size_t>{l_hash});
+        } else {
+          it->second->insert(l_hash);
         }
       }
+    }
+  }
+
+  std::vector<KLGrid> k_l_grids;
+  k_l_grids.reserve(k_l_hashes.size());  // lower bound
+
+  for (const auto &[k_hash, l_hashes] : k_l_hashes) {
+    const auto k_group = EdgesByIndices(*k_groups[k_hash]);
+
+    for (const auto l_hash : *l_hashes) {
+      k_l_grids.emplace_back(k_group, EdgesByIndices(*l_groups[l_hash]));
     }
   }
 
@@ -618,6 +645,24 @@ std::vector<Set> Graph::CalculateIntersections(
   }
 
   return intersections;
+}
+
+std::ostream &operator<<(std::ostream &os, const KLGrid &grid) {
+  os << "{[";
+
+  for (std::size_t i = 0; i < grid.k_group.size() - 1; i++) {
+    os << *grid.k_group[i] << ", ";
+  }
+
+  os << *grid.k_group.back() << "], [";
+
+  for (std::size_t i = 0; i < grid.l_group.size() - 1; i++) {
+    os << *grid.l_group[i] << ", ";
+  }
+
+  os << *grid.k_group.back() << "]}";
+
+  return os;
 }
 
 }  // namespace graph

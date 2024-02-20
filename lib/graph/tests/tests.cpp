@@ -520,6 +520,21 @@ TEST(GraphTest, CheckAC) {
   }
 }
 
+TEST(GraphTest, CheckKLGrid) {
+  std::vector<Vertex> vertices{{2, 4, "0"}, {2, 1, "1"}, {4, 4, "2"},
+                               {4, 1, "3"}, {1, 3, "4"}, {5, 3, "5"},
+                               {1, 2, "6"}, {5, 2, "7"}};
+  Graph graph(std::move(vertices));
+  graph.AddEdges({{0, 1}, {1, 2}, {2, 3}, {4, 5}, {5, 6}, {6, 7}});
+
+  const auto grids_2_3 = graph.CheckGridFree(2, 3);
+  ASSERT_EQ(grids_2_3.size(), 6);
+  // TODO: check the content
+
+  const auto grid_3_3 = graph.CheckGridFree(3, 3);
+  ASSERT_EQ(grid_3_3.size(), 2); // не баг, а фича
+}
+
 }  // namespace
 
 }  // namespace graph
