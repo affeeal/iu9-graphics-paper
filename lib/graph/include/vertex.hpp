@@ -1,7 +1,5 @@
 #pragma once
 
-#include <memory>
-
 #include "point.hpp"
 
 namespace graph {
@@ -13,7 +11,6 @@ using VertexSptrConst = std::shared_ptr<const Vertex>;
 
 class Vertex {
  public:
-  Vertex() = default;
   Vertex(const Vertex& other);
   Vertex(Vertex&& other);
 
@@ -34,5 +31,7 @@ class Vertex {
   double x_;
   double y_;
 };
+
+std::ostream &operator<<(std::ostream &os, const Vertex &rhs) {
 
 }  // namespace graph

@@ -1,75 +1,125 @@
 #include "curve.hpp"
 
 #include <algorithm>
-#include <iostream>
 #include <limits>
-
-#include "rectangle.hpp"
 
 namespace bezier {
 
 static constexpr auto kCurveCenterT = 0.5;
 
-Curve::Curve(std::vector<Point> &&points) : points_(std::move(points)) {
-  if (points_.size() < 2) {
-    throw std::logic_error("A curve must consist of at least two points");
-  }
+Curve::Curve(const std::vector<Point> &ps) : ps_(ps) {
+  CheckPointsSizeInvariant();
 }
 
-bool Curve::operator==(const Curve &other) const {
-  return points_ == other.points_;
+Curve::Curve(std::vector<Point> &&ps) : ps_(std::move(ps)) {
+  CheckPointsSizeInvariant();
 }
 
-std::ostream &operator<<(std::ostream &os, const Curve &c) {
-  std::cout << '[';
-  for (std::size_t i = 0; i < c.points_.size() - 1; i++) {
-    std::cout << c.points_[i] << ", ";
-  }
-  std::cout << c.points_.back() << ']';
+bool Curve::operator==(const Curve &rhs) const { return ps_ == rhs.ps_; }
 
+std::ostream &operator<<(std::ostream &os, const Curve &rhs) {
+  rhs.Dump(os);
   return os;
 }
 
-RectangleUptr Curve::BoundingBox() const {
+Rectangle Curve::BoundingRectangle() const {
   auto leftmost_x = std::numeric_limits<double>::max();
   auto topmost_y = std::numeric_limits<double>::min();
   auto rightmost_x = std::numeric_limits<double>::min();
   auto bottommost_y = std::numeric_limits<double>::max();
 
-  for (const auto &point : points_) {
-    if (point.get_x() < leftmost_x) {
-      leftmost_x = point.get_x();
+  for (const auto &p : ps_) {
+    if (p.x < leftmost_x) {
+      leftmost_x = p.x;
     }
 
-    if (point.get_y() > topmost_y) {
-      topmost_y = point.get_y();
+    if (p.y > topmost_y) {
+      topmost_y = p.y;
     }
 
-    if (point.get_x() > rightmost_x) {
-      rightmost_x = point.get_x();
+    if (p.x > rightmost_x) {
+      rightmost_x = p.x;
     }
 
-    if (point.get_y() < bottommost_y) {
-      bottommost_y = point.get_y();
+    if (p.y < bottommost_y) {
+      bottommost_y = p.y;
     }
   }
 
-  return std::make_unique<Rectangle>(Point(leftmost_x, topmost_y),
-                                     Point(rightmost_x, bottommost_y));
+  return {{leftmost_x, topmost_y}, {rightmost_x, bottommost_y}};
 }
 
-std::pair<CurveUptr, CurveUptr> Curve::Split(const double t) const {
-  std::vector<Point> first_curve_points;
-  first_curve_points.reserve(points_.size());
+std::pair<std::unique_ptr<Curve>, std::unique_ptr<Curve>> Curve::Split(
+    const double t) const {
+  std::vector<Point> ps1;
+  ps1.reserve(ps_.size());
 
-  std::vector<Point> second_curve_points;
-  second_curve_points.reserve(points_.size());
+  std::vector<Point> ps2;
+  ps2.reserve(ps_.size());
 
-  SplitDeCasteljau(first_curve_points, second_curve_points, points_, t);
+  SplitDeCasteljau(ps1, ps2, ps_, t);
 
-  return std::make_pair(
-      std::make_unique<Curve>(std::move(first_curve_points)),
-      std::make_unique<Curve>(std::move(second_curve_points)));
+  return std::make_pair(std::make_unique<Curve>(std::move(ps1)),
+                        std::make_unique<Curve>(std::move(ps2)));
+}
+
+bool Curve::IsIntersect(const Curve &c, const double eps) const {
+  return IsIntersect(*this, c, eps);
+}
+
+std::vector<Point> Curve::Intersect(const Curve &c, const double eps) const {
+  std::vector<Point> intersections;
+  Intersect(intersections, *this, c, eps);
+  return intersections;
+}
+
+void Curve::Intersect(std::vector<Point> &ps, const Curve &c1, const Curve &c2,
+                      const double eps) const {
+  const auto r1 = c1.BoundingRectangle();
+  const auto r2 = c2.BoundingRectangle();
+
+  if (!r1.IsOverlap(r2)) {
+    return;
+  }
+
+  if (CompletionMetric(r1, r2) < eps) {
+    // One of the possible intersection approximation
+    const auto intersection = r1.Center().CenterWith(r2.Center());
+
+    const auto is_in_neighbourhood = [&intersection](const Point &p) {
+      return intersection.IsInNeighborhood(p);
+    };
+
+    if (std::find_if(ps.begin(), ps.end(), is_in_neighbourhood) == ps.end()) {
+      ps.push_back(intersection);
+    }
+
+    return;
+  }
+
+  const auto s1 = c1.Split(kCurveCenterT);
+  const auto s2 = c2.Split(kCurveCenterT);
+
+  Intersect(ps, *s1.first, *s2.first, eps);
+  Intersect(ps, *s1.first, *s2.second, eps);
+  Intersect(ps, *s1.second, *s2.first, eps);
+  Intersect(ps, *s1.second, *s2.second, eps);
+}
+
+void Curve::Dump(std::ostream &os) const {
+  os << '[';
+
+  for (std::size_t i = 0, end = ps_.size() - 1; i < end; ++i) {
+    os << ps_[i] << ", ";
+  }
+
+  os << ps_.back() << ']';
+}
+
+void Curve::CheckPointsSizeInvariant() const {
+  if (ps_.size() < 2) {
+    throw std::logic_error("Curve points size invariant violated");
+  }
 }
 
 void Curve::SplitDeCasteljau(std::vector<Point> &first_curve_points,
@@ -96,88 +146,30 @@ void Curve::SplitDeCasteljau(std::vector<Point> &first_curve_points,
   SplitDeCasteljau(first_curve_points, second_curve_points, new_points, t);
 }
 
-bool Curve::IsIntersect(const Curve &other, const double threshold) const {
-  auto is_intersection_found = false;
-  CheckIntersection(is_intersection_found, *this, other, threshold);
-  return is_intersection_found;
+bool Curve::IsIntersect(const Curve &c1, const Curve &c2,
+                        const double eps) const {
+  const auto r1 = c1.BoundingRectangle();
+  const auto r2 = c2.BoundingRectangle();
+
+  if (!r1.IsOverlap(r2)) {
+    return false;
+  }
+
+  if (CompletionMetric(r1, r2) < eps) {
+    return true;
+  }
+
+  const auto s1 = c1.Split(kCurveCenterT);
+  const auto s2 = c2.Split(kCurveCenterT);
+
+  return IsIntersect(*s1.first, *s2.first, eps) ||
+         IsIntersect(*s1.first, *s2.second, eps) ||
+         IsIntersect(*s1.second, *s2.first, eps) ||
+         IsIntersect(*s1.second, *s2.second, eps);
 }
 
-// Optimized to find just one intersection
-void Curve::CheckIntersection(bool &intersection_found, const Curve &first,
-                              const Curve &second,
-                              const double threshold) const {
-  if (intersection_found) {
-    return;
-  }
-
-  const auto first_box = first.BoundingBox();
-  const auto second_box = second.BoundingBox();
-
-  if (!first_box->IsOverlap(*second_box)) {
-    return;
-  }
-
-  if (CompletionMetric(*first_box, *second_box) < threshold) {
-    intersection_found = true;
-    return;
-  }
-
-  const auto first_split = first.Split(kCurveCenterT);
-  const auto second_split = second.Split(kCurveCenterT);
-
-  CheckIntersection(intersection_found, *first_split.first, *second_split.first,
-                    threshold);
-  CheckIntersection(intersection_found, *first_split.first,
-                    *second_split.second, threshold);
-  CheckIntersection(intersection_found, *first_split.second,
-                    *second_split.first, threshold);
-  CheckIntersection(intersection_found, *first_split.second,
-                    *second_split.second, threshold);
-}
-
-std::vector<Point> Curve::Intersect(const Curve &other,
-                                    const double threshold) const {
-  std::vector<Point> intersections;
-  Intersect(intersections, *this, other, threshold);
-  return intersections;
-}
-
-void Curve::Intersect(std::vector<Point> &intersections, const Curve &first,
-                      const Curve &second, const double threshold) const {
-  const auto first_box = first.BoundingBox();
-  const auto second_box = second.BoundingBox();
-
-  if (!first_box->IsOverlap(*second_box)) {
-    return;
-  }
-
-  if (CompletionMetric(*first_box, *second_box) < threshold) {
-    // One of the possible intersection approximation
-    auto intersection = first_box->Center().CenterWith(second_box->Center());
-
-    const auto is_approximately_equal = [&intersection](const Point &p) {
-      return intersection.IsInNeighborhood(p);
-    };
-
-    if (std::find_if(intersections.begin(), intersections.end(),
-                     is_approximately_equal) == intersections.end()) {
-      intersections.push_back(std::move(intersection));
-    }
-
-    return;
-  }
-
-  const auto first_split = first.Split(kCurveCenterT);
-  const auto second_split = second.Split(kCurveCenterT);
-
-  Intersect(intersections, *first_split.first, *second_split.first, threshold);
-  Intersect(intersections, *first_split.first, *second_split.second, threshold);
-  Intersect(intersections, *first_split.second, *second_split.first, threshold);
-  Intersect(intersections, *first_split.second, *second_split.second,
-            threshold);
-}
-
-double Curve::CompletionMetric(const Rectangle &r1, const Rectangle &r2) const {
+double Curve::CompletionMetric(const Rectangle &r1,
+                               const Rectangle &r2) const noexcept {
   return r1.Perimeter() + r2.Perimeter();
 }
 

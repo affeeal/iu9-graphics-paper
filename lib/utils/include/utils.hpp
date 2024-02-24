@@ -13,6 +13,8 @@
 
 namespace utils {
 
+constexpr auto kEps = 10e-4;  // or 1e-4?
+
 class Vector {
  public:
   Vector() = default;

@@ -532,7 +532,7 @@ TEST(GraphTest, CheckKLGrid) {
   // TODO: check the content
 
   const auto grid_3_3 = graph.CheckGridFree(3, 3);
-  ASSERT_EQ(grid_3_3.size(), 2); // не баг, а фича
+  ASSERT_EQ(grid_3_3.size(), 2);  // не баг, а фича
 }
 
 }  // namespace
