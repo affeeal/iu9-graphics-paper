@@ -20,9 +20,9 @@ class Curve final {
 
   bool operator==(const Curve &rhs) const;
 
-  const std::vector<Point> &get_points() const &noexcept { return ps_; }
+  const std::vector<Point> &get_points() const &noexcept;
 
-  Rectangle Bound() const;
+  Rectangle BoundingRectangle() const;
   std::pair<std::unique_ptr<Curve>, std::unique_ptr<Curve>> Split(
       const double t) const;
   bool IsIntersect(const Curve &c, const double eps = kDefaultThreshold) const;

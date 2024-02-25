@@ -17,12 +17,14 @@ Curve::Curve(std::vector<Point> &&ps) : ps_(std::move(ps)) {
 
 bool Curve::operator==(const Curve &rhs) const { return ps_ == rhs.ps_; }
 
+const std::vector<Point> &Curve::get_points() const &noexcept { return ps_; }
+
 std::ostream &operator<<(std::ostream &os, const Curve &rhs) {
   rhs.Dump(os);
   return os;
 }
 
-Rectangle Curve::Bound() const {
+Rectangle Curve::BoundingRectangle() const {
   auto leftmost_x = std::numeric_limits<double>::max();
   auto topmost_y = std::numeric_limits<double>::min();
   auto rightmost_x = std::numeric_limits<double>::min();
@@ -75,8 +77,8 @@ std::vector<Point> Curve::Intersect(const Curve &c, const double eps) const {
 
 void Curve::Intersect(std::vector<Point> &ps, const Curve &c1, const Curve &c2,
                       const double eps) const {
-  const auto r1 = c1.Bound();
-  const auto r2 = c2.Bound();
+  const auto r1 = c1.BoundingRectangle();
+  const auto r2 = c2.BoundingRectangle();
 
   if (!r1.IsOverlap(r2)) {
     return;
@@ -147,8 +149,8 @@ void Curve::SplitDeCasteljau(std::vector<Point> &ps1, std::vector<Point> &ps2,
 
 bool Curve::IsIntersect(const Curve &c1, const Curve &c2,
                         const double eps) const {
-  const auto r1 = c1.Bound();
-  const auto r2 = c2.Bound();
+  const auto r1 = c1.BoundingRectangle();
+  const auto r2 = c2.BoundingRectangle();
 
   if (!r1.IsOverlap(r2)) {
     return false;

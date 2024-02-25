@@ -68,7 +68,7 @@ TEST(RectangleTest, OverlapNested) {
 
 TEST(CurveTest, LinearCurveBoundingRectangle) {
   const Curve curve(std::vector<Point>{Point(0.6, 0.5), Point(0.4, 0.3)});
-  const auto box = curve.Bound();
+  const auto box = curve.BoundingRectangle();
 
   EXPECT_EQ(box.get_top_left(), Point(0.4, 0.5));
   EXPECT_EQ(box.get_bottom_right(), Point(0.6, 0.3));
@@ -77,7 +77,7 @@ TEST(CurveTest, LinearCurveBoundingRectangle) {
 TEST(CurveTest, QuadraticCurveBoundingRectangle) {
   const Curve curve(
       std::vector<Point>{Point(0.2, 0.4), Point(0.4, 0.2), Point(0.6, 0.4)});
-  const auto box = curve.Bound();
+  const auto box = curve.BoundingRectangle();
 
   EXPECT_EQ(box.get_top_left(), Point(0.2, 0.4));
   EXPECT_EQ(box.get_bottom_right(), Point(0.6, 0.2));
@@ -86,7 +86,7 @@ TEST(CurveTest, QuadraticCurveBoundingRectangle) {
 TEST(CurveTest, QubicCurveBoundingRectangle) {
   const Curve curve(std::vector<Point>{Point(0.1, 0.1), Point(0.4, 0.2),
                                        Point(0.6, 0.6), Point(0.4, 0.4)});
-  const auto box = curve.Bound();
+  const auto box = curve.BoundingRectangle();
 
   EXPECT_EQ(box.get_top_left(), Point(0.1, 0.6));
   EXPECT_EQ(box.get_bottom_right(), Point(0.6, 0.1));
