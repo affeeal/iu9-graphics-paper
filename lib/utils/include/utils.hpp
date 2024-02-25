@@ -15,7 +15,7 @@ namespace utils {
 
 constexpr auto kEps = 10e-4;  // or 1e-4?
 
-class Vector {
+class Vector final {
  public:
   Vector(const bezier::Point &p);
   Vector(const graph::Edge &edge);

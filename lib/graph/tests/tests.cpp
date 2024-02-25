@@ -23,7 +23,7 @@ std::function<bool(const std::vector<EdgeSptrConst>&)> RefComp(
   return [&es1](const std::vector<EdgeSptrConst>& es2) {
     for (const auto& e : es1) {
       if (std::find_if(es2.begin(), es2.end(), RefComp(e)) == es2.end()) {
-        return true;
+        return false;
       }
     }
 
@@ -39,7 +39,7 @@ std::function<bool(const std::pair<EdgeSptrConst, EdgeSptrConst>&)> RefComp(
   };
 }
 
-TEST(GraphKPlanar, 1Planar) {
+TEST(Graph, 1Planar) {
   Graph g(
       {{1, 3, "a"}, {1, 1, "b"}, {2, 1, "c"}, {2.5, 2, "d"}, {0.5, 2, "e"}});
   g.AddSLEdges({{0, 1}, {1, 2}, {2, 0}, {3, 4}, {4, 2}});
@@ -57,7 +57,7 @@ TEST(GraphKPlanar, 1Planar) {
   ASSERT_EQ(unsat_2p.size(), 0);
 }
 
-TEST(GraphKQuasiPlanar, 4QuasiPlanar) {
+TEST(Graph, 4QuasiPlanar) {
   Graph g({{1, 2, "0"},
            {5, 2, "1"},
            {1, 5, "2"},
@@ -75,8 +75,8 @@ TEST(GraphKQuasiPlanar, 4QuasiPlanar) {
   const std::vector<std::vector<EdgeSptrConst>> expected_unsat_3qp{
       {es[0], es[4], es[5]}, {es[3], es[4], es[5]}};
 
-  for (const auto& c : expected_unsat_3qp) {
-    EXPECT_NE(std::find_if(unsat_3qp.begin(), unsat_3qp.end(), RefComp(c)),
+  for (const auto& es : expected_unsat_3qp) {
+    EXPECT_NE(std::find_if(unsat_3qp.begin(), unsat_3qp.end(), RefComp(es)),
               unsat_3qp.end());
   }
 
@@ -84,117 +84,130 @@ TEST(GraphKQuasiPlanar, 4QuasiPlanar) {
   ASSERT_EQ(unsat_4qp.size(), 0);
 }
 
-/*
-TEST(GraphKQuasiPlanar, 5QuasiPlanar) {
-  const auto graph = Graph::FromFile(
-      kDataPathPrefix + "test_5_quasi_planar.tex", Graph::Filetype::kTex);
-  const auto& edges = graph->get_edges();
+TEST(Grap, 5QuasiPlanar) {
+  Graph g({{2, 7, "0"},
+           {1, 5, "1"},
+           {1, 3, "2"},
+           {3, 2, "3"},
+           {4, 1, "4"},
+           {5, 1, "5"},
+           {6, 2, "6"},
+           {6, 3, "7"},
+           {9, 3, "8"},
+           {9, 5, "9"},
+           {8, 9, "10"},
+           {6, 6, "11"},
+           {5, 8, "12"},
+           {9, 8, "13"},
+           {4, 6, "14"},
+           {5, 7, "15"},
+           {2, 6, "16"}});
+  g.AddSLEdges({{0, 5},
+                {1, 8},
+                {2, 9},
+                {3, 6},
+                {4, 10},
+                {7, 11},
+                {13, 12},
+                {16, 12},
+                {14, 15}});
+  const auto& es = g.get_edges();
 
-  const auto _3_cliques = graph->CheckKQuasiPlanar(3);
-  ASSERT_EQ(_3_cliques.size(), 8);
+  const auto unsat_3qp = g.CheckKQuasiPlanar(3);
+  ASSERT_EQ(unsat_3qp.size(), 8);
 
-  std::vector<std::array<std::size_t, 3>> expected_3_cliques{
-      {0, 3, 4}, {0, 1, 2}, {0, 1, 4}, {0, 2, 4},
-      {1, 2, 4}, {1, 2, 5}, {2, 4, 5}, {1, 4, 5},
+  const std::vector<std::vector<EdgeSptrConst>> expected_unsat_3qp{
+      {es[0], es[3], es[4]}, {es[0], es[1], es[2]}, {es[0], es[1], es[4]},
+      {es[0], es[2], es[4]}, {es[1], es[2], es[4]}, {es[1], es[2], es[5]},
+      {es[2], es[4], es[5]}, {es[1], es[4], es[5]},
   };
 
-  for (const auto& expected_3_clique : expected_3_cliques) {
-    EXPECT_NE(std::find_if(_3_cliques.begin(), _3_cliques.end(),
-                           EdgesComparator({edges[expected_3_clique[0]],
-                                            edges[expected_3_clique[1]],
-                                            edges[expected_3_clique[2]]})),
-              _3_cliques.end());
+  for (const auto& es : expected_unsat_3qp) {
+    EXPECT_NE(std::find_if(unsat_3qp.begin(), unsat_3qp.end(), RefComp(es)),
+              unsat_3qp.end());
   }
 
-  const auto _4_cliques = graph->CheckKQuasiPlanar(4);
-  ASSERT_EQ(_4_cliques.size(), 2);
+  const auto unsat_4qp = g.CheckKQuasiPlanar(4);
+  ASSERT_EQ(unsat_4qp.size(), 2);
 
-  std::vector<std::array<std::size_t, 4>> expected_4_cliques{
-      {0, 1, 2, 4},
-      {1, 2, 4, 5},
+  const std::vector<std::vector<EdgeSptrConst>> expected_unsat_4qp{
+      {es[0], es[1], es[2], es[4]},
+      {es[1], es[2], es[4], es[5]},
   };
 
-  for (const auto& expected_4_clique : expected_4_cliques) {
-    EXPECT_NE(std::find_if(_4_cliques.begin(), _4_cliques.end(),
-                           EdgesComparator({edges[expected_4_clique[0]],
-                                            edges[expected_4_clique[1]],
-                                            edges[expected_4_clique[2]],
-                                            edges[expected_4_clique[3]]})),
-              _4_cliques.end());
+  for (const auto& es : expected_unsat_4qp) {
+    EXPECT_NE(std::find_if(unsat_4qp.begin(), unsat_4qp.end(), RefComp(es)),
+              unsat_4qp.end());
   }
 
-  const auto _5_cliques = graph->CheckKQuasiPlanar(5);
-  ASSERT_EQ(_5_cliques.size(), 0);
+  const auto unsat_5qp = g.CheckKQuasiPlanar(5);
+  ASSERT_EQ(unsat_5qp.size(), 0);
 }
 
-TEST(GraphTest, CheckKSkewness_InvalidK) {
-  const Graph graph({}, {});
-  EXPECT_ANY_THROW(graph.CheckKSkewness(0));
-}
+TEST(Graph, CheckKSkewness) {
+  Graph g({{1, 1, "0"},
+           {3, 2, "1"},
+           {4, 2, "2"},
+           {7, 6, "3"},
+           {5, 5, "4"},
+           {5, 6, "5"},
+           {4, 6, "6"},
+           {3, 5, "7"}});
+  g.AddSLEdges({{0, 4}, {1, 3}, {2, 6}, {5, 7}});
 
-TEST(GraphTest, CheckKSkewness_1Skewness) {
-  const auto graph = Graph::FromFile(kDataPathPrefix + "test_1_skewness.tex",
-                                     Graph::Filetype::kTex);
-  const auto& edges = graph->get_edges();
+  auto unsat_1s = g.CheckKSkewness(1);
+  ASSERT_EQ(unsat_1s.size(), 0);
 
-  const auto _1_skewness_unsat = graph->CheckKSkewness(1);
-  ASSERT_EQ(_1_skewness_unsat.size(), 0);
-}
+  g.AddVertices({{3, 6, "8"}, {5, 3, "9"}});
+  g.AddSLEdge(8, 9);
+  const auto& es = g.get_edges();
 
-TEST(GraphTest, CheckKSkewness_2Skewness) {
-  const auto graph = Graph::FromFile(kDataPathPrefix + "test_2_skewness.tex",
-                                     Graph::Filetype::kTex);
-  const auto& edges = graph->get_edges();
+  unsat_1s = g.CheckKSkewness(1);
+  ASSERT_EQ(unsat_1s.size(), 2);
 
-  const auto _1_skewness_unsat = graph->CheckKSkewness(1);
-  ASSERT_EQ(_1_skewness_unsat.size(), 2);
+  const std::vector<std::vector<EdgeSptrConst>> expected_unsat_1s{{es[2]},
+                                                                  {es[4]}};
 
-  const std::vector<std::array<std::size_t, 1>> expected_1_skewness_unsat{
-      {2},
-      {4},
-  };
-
-  for (const auto& s : expected_1_skewness_unsat) {
-    EXPECT_NE(std::find_if(_1_skewness_unsat.begin(), _1_skewness_unsat.end(),
-                           EdgesComparator({edges[s[0]]})),
-              _1_skewness_unsat.end());
+  for (const auto& es : expected_unsat_1s) {
+    EXPECT_NE(std::find_if(unsat_1s.begin(), unsat_1s.end(), RefComp(es)),
+              unsat_1s.end());
   }
 
-  const auto _2_skewness_unsat = graph->CheckKSkewness(2);
-  ASSERT_EQ(_2_skewness_unsat.size(), 0);
+  const auto unsat_2s = g.CheckKSkewness(2);
+  ASSERT_EQ(unsat_2s.size(), 0);
 }
 
-TEST(GraphTest, CheckRAC_Success) {
-  const auto graph =
-      Graph::FromFile(kDataPathPrefix + "test_rac.tex", Graph::Filetype::kTex);
-  const auto rac_unsat_pairs = graph->CheckRAC();
-  ASSERT_EQ(rac_unsat_pairs.size(), 0);
-}
+TEST(Graph, CheckRAC) {
+  Graph g({{2, 3, "0"},
+           {4, 1, "1"},
+           {9, 2, "2"},
+           {12, 5, "3"},
+           {10, 5, "4"},
+           {7, 6, "5"},
+           {6, 3, "6"},
+           {4, 5, "7"}});
+  g.AddSLEdges(
+      {{0, 1}, {1, 3}, {2, 5}, {4, 6}, {7, 6}, {7, 0}, {6, 0}, {1, 7}});
 
-TEST(GraphTest, CheckRAC_Failure) {
-  const auto graph = Graph::FromFile(kDataPathPrefix + "test_non_rac.tex",
-                                     Graph::Filetype::kTex);
-  const auto& edges = graph->get_edges();
+  auto unsat_rac = g.CheckRAC();
+  ASSERT_EQ(unsat_rac.size(), 0);
 
-  const auto rac_unsatisfying = graph->CheckRAC();
-  ASSERT_EQ(rac_unsatisfying.size(), 3);
+  g.AddSLEdges({{2, 4}, {7, 4}, {6, 5}});
+  const auto& es = g.get_edges();
 
-  std::vector<std::pair<EdgeSptrConst, EdgeSptrConst>>
-      expected_rac_unsatisfying{
-          {edges[1], edges[8]},
-          {edges[2], edges[9]},
-          {edges[9], edges[10]},
-      };
+  unsat_rac = g.CheckRAC();
+  ASSERT_EQ(unsat_rac.size(), 3);
 
-  for (const auto& pair : expected_rac_unsatisfying) {
-    EXPECT_NE(std::find_if(rac_unsatisfying.begin(), rac_unsatisfying.end(),
-                           EdgePairComparator(pair)),
-              rac_unsatisfying.end());
+  const std::vector<std::pair<EdgeSptrConst, EdgeSptrConst>> expected_unsat_rac{
+      {es[1], es[8]}, {es[2], es[9]}, {es[9], es[10]}};
+
+  for (const auto& p : expected_unsat_rac) {
+    EXPECT_NE(std::find_if(unsat_rac.begin(), unsat_rac.end(), RefComp(p)),
+              unsat_rac.end());
   }
 }
 
-*/
-TEST(GraphTest, CheckAC) {
+TEST(Graph, CheckAC) {
   Graph g({{1, 1, "0"},
            {3, 1, "1"},
            {5, 2, "2"},
@@ -202,17 +215,20 @@ TEST(GraphTest, CheckAC) {
            {5, 4, "4"},
            {3, 4, "5"}});
   g.AddSLEdges({{0, 3}, {1, 5}, {2, 4}, {4, 5}});
-  const auto& es = g.get_edges();
 
   const auto alpha = std::acos(1 / std::sqrt(5));
   auto unsat_ace = g.CheckACE(alpha);
   ASSERT_EQ(unsat_ace.size(), 0);
 
   g.AddSLEdges({{0, 2}, {1, 4}});
+  const auto& es = g.get_edges();
+
   unsat_ace = g.CheckACE(alpha);
   ASSERT_EQ(unsat_ace.size(), 3);
-  std::vector<std::pair<EdgeSptrConst, EdgeSptrConst>> expected_unsat_ace{
+
+  const std::vector<std::pair<EdgeSptrConst, EdgeSptrConst>> expected_unsat_ace{
       {es[1], es[4]}, {es[4], es[5]}, {es[0], es[5]}};
+
   for (const auto& p : expected_unsat_ace) {
     EXPECT_NE(std::find_if(unsat_ace.begin(), unsat_ace.end(), RefComp(p)),
               unsat_ace.end());
@@ -220,26 +236,32 @@ TEST(GraphTest, CheckAC) {
 
   const auto unsat_acl = g.CheckACL(alpha);
   ASSERT_EQ(unsat_acl.size(), 2);
+
   const std::vector<std::pair<EdgeSptrConst, EdgeSptrConst>> expected_unsat_acl{
       {es[4], es[5]}, {es[0], es[5]}};
+
   for (const auto& p : expected_unsat_acl) {
     EXPECT_NE(std::find_if(unsat_ace.begin(), unsat_ace.end(), RefComp(p)),
               unsat_ace.end());
   }
 }
 
-TEST(GraphTest, CheckKLGrid) {
-  std::vector<Vertex> vertices{{2, 4, "0"}, {2, 1, "1"}, {4, 4, "2"},
-                               {4, 1, "3"}, {1, 3, "4"}, {5, 3, "5"},
-                               {1, 2, "6"}, {5, 2, "7"}};
-  Graph graph(std::move(vertices));
-  graph.AddSLEdges({{0, 1}, {1, 2}, {2, 3}, {4, 5}, {5, 6}, {6, 7}});
+TEST(Graph, CheckKLGrid) {
+  Graph g({{2, 4, "0"},
+           {2, 1, "1"},
+           {4, 4, "2"},
+           {4, 1, "3"},
+           {1, 3, "4"},
+           {5, 3, "5"},
+           {1, 2, "6"},
+           {5, 2, "7"}});
+  g.AddSLEdges({{0, 1}, {1, 2}, {2, 3}, {4, 5}, {5, 6}, {6, 7}});
 
-  const auto grids_2_3 = graph.CheckGridFree(2, 3);
+  const auto grids_2_3 = g.CheckGridFree(2, 3);
   ASSERT_EQ(grids_2_3.size(), 6);
   // TODO: check the content
 
-  const auto grid_3_3 = graph.CheckGridFree(3, 3);
+  const auto grid_3_3 = g.CheckGridFree(3, 3);
   ASSERT_EQ(grid_3_3.size(), 2);  // не баг, а фича
 }
 

@@ -23,7 +23,13 @@ class Graph final {
   const std::vector<VertexSptrConst> &get_vertices() const &noexcept;
   const std::vector<EdgeSptrConst> &get_edges() const &noexcept;
 
-  static GraphUptr FromFile(const std::string &path);
+  static GraphUptr FromDot(const std::string &path);
+
+  void AddVertex(const Vertex &v);
+  void AddVertex(Vertex &&v);
+
+  void AddVertices(const std::vector<Vertex> &vs);
+  void AddVertices(std::vector<Vertex> &&vs);
 
   void AddSLEdge(const std::size_t start, const std::size_t end);
   void AddSLEdges(

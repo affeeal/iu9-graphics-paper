@@ -249,16 +249,10 @@ void HandleDrawCommand(std::string &&command, std::vector<EdgeSptrConst> &edges,
 
 }  // namespace
 
-Graph::Graph(const std::vector<Vertex> &vertices) {
-  for (const auto &vertex : vertices) {
-    vs_.push_back(std::make_shared<const Vertex>(vertex));
-  }
-}
+Graph::Graph(const std::vector<Vertex> &vertices) { AddVertices(vertices); }
 
 Graph::Graph(std::vector<Vertex> &&vertices) {
-  for (auto &vertex : vertices) {
-    vs_.push_back(std::make_shared<const Vertex>(std::move(vertex)));
-  }
+  AddVertices(std::move(vertices));
 }
 
 Graph::Graph(std::vector<VertexSptrConst> &&vs, std::vector<EdgeSptrConst> &&es)
@@ -273,7 +267,7 @@ const std::vector<EdgeSptrConst> &Graph::get_edges() const &noexcept {
 }
 
 // TODO: rewrite adequately
-GraphUptr Graph::FromFile(const std::string &path) {
+GraphUptr Graph::FromDot(const std::string &path) {
   {
     const auto command =
         "dot2tex " + path + " -ftikz -tmath -o " + path + ".tex";
@@ -317,6 +311,28 @@ GraphUptr Graph::FromFile(const std::string &path) {
 
   auto vertices = utils::ToVector(std::move(labels_to_vertices));
   return std::make_unique<Graph>(std::move(vertices), std::move(edges));
+}
+
+void Graph::AddVertex(const Vertex &v) {
+  vs_.push_back(std::make_shared<const Vertex>(v));
+}
+
+void Graph::AddVertex(Vertex &&v) {
+  vs_.push_back(std::make_shared<const Vertex>(std::move(v)));
+}
+
+void Graph::AddVertices(const std::vector<Vertex> &vs) {
+  vs_.reserve(vs_.size() + vs.size());
+  for (const auto &v : vs) {
+    AddVertex(v);
+  }
+}
+
+void Graph::AddVertices(std::vector<Vertex> &&vs) {
+  vs_.reserve(vs_.size() + vs.size());
+  for (auto &v : vs) {
+    AddVertex(std::move(v));
+  }
 }
 
 void Graph::AddSLEdge(const std::size_t start, const std::size_t end) {
