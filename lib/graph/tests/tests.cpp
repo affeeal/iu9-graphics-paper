@@ -14,15 +14,15 @@ namespace {
 
 const std::string kDataPathPrefix = "../../../../data/";
 
-std::function<bool(const EdgeSptrConst&)> EdgeRefComp(const EdgeSptrConst& e1) {
+std::function<bool(const EdgeSptrConst&)> RefComp(const EdgeSptrConst& e1) {
   return [&e1](const EdgeSptrConst& e2) { return &*e1 == &*e2; };
 }
 
-std::function<bool(const std::vector<EdgeSptrConst>&)> EdgesRefComp(
+std::function<bool(const std::vector<EdgeSptrConst>&)> RefComp(
     const std::vector<EdgeSptrConst>& es1) {
   return [&es1](const std::vector<EdgeSptrConst>& es2) {
     for (const auto& e : es1) {
-      if (std::find_if(es2.begin(), es2.end(), EdgeRefComp(e)) == es2.end()) {
+      if (std::find_if(es2.begin(), es2.end(), RefComp(e)) == es2.end()) {
         return true;
       }
     }
@@ -31,8 +31,8 @@ std::function<bool(const std::vector<EdgeSptrConst>&)> EdgesRefComp(
   };
 }
 
-std::function<bool(const std::pair<EdgeSptrConst, EdgeSptrConst>&)>
-EdgePairRefComp(const std::pair<EdgeSptrConst, EdgeSptrConst>& p1) {
+std::function<bool(const std::pair<EdgeSptrConst, EdgeSptrConst>&)> RefComp(
+    const std::pair<EdgeSptrConst, EdgeSptrConst>& p1) {
   return [&p1](const std::pair<EdgeSptrConst, EdgeSptrConst>& p2) {
     return &*p1.first == &*p2.first && &*p1.second == &*p2.second ||
            &*p1.first == &*p2.second && &*p1.second == &*p2.first;
@@ -49,7 +49,7 @@ TEST(GraphKPlanar, 1Planar) {
   ASSERT_EQ(unsat_1p.size(), 2);
 
   for (const auto& e : {es[0], es[3]}) {
-    EXPECT_NE(std::find_if(unsat_1p.begin(), unsat_1p.end(), EdgeRefComp(e)),
+    EXPECT_NE(std::find_if(unsat_1p.begin(), unsat_1p.end(), RefComp(e)),
               unsat_1p.end());
   }
 
@@ -76,7 +76,7 @@ TEST(GraphKQuasiPlanar, 4QuasiPlanar) {
       {es[0], es[4], es[5]}, {es[3], es[4], es[5]}};
 
   for (const auto& c : expected_unsat_3qp) {
-    EXPECT_NE(std::find_if(unsat_3qp.begin(), unsat_3qp.end(), EdgesRefComp(c)),
+    EXPECT_NE(std::find_if(unsat_3qp.begin(), unsat_3qp.end(), RefComp(c)),
               unsat_3qp.end());
   }
 
@@ -214,9 +214,8 @@ TEST(GraphTest, CheckAC) {
   std::vector<std::pair<EdgeSptrConst, EdgeSptrConst>> expected_unsat_ace{
       {es[1], es[4]}, {es[4], es[5]}, {es[0], es[5]}};
   for (const auto& p : expected_unsat_ace) {
-    EXPECT_NE(
-        std::find_if(unsat_ace.begin(), unsat_ace.end(), EdgePairRefComp(p)),
-        unsat_ace.end());
+    EXPECT_NE(std::find_if(unsat_ace.begin(), unsat_ace.end(), RefComp(p)),
+              unsat_ace.end());
   }
 
   const auto unsat_acl = g.CheckACL(alpha);
@@ -224,9 +223,8 @@ TEST(GraphTest, CheckAC) {
   const std::vector<std::pair<EdgeSptrConst, EdgeSptrConst>> expected_unsat_acl{
       {es[4], es[5]}, {es[0], es[5]}};
   for (const auto& p : expected_unsat_acl) {
-    EXPECT_NE(
-        std::find_if(unsat_ace.begin(), unsat_ace.end(), EdgePairRefComp(p)),
-        unsat_ace.end());
+    EXPECT_NE(std::find_if(unsat_ace.begin(), unsat_ace.end(), RefComp(p)),
+              unsat_ace.end());
   }
 }
 

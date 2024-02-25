@@ -9,7 +9,7 @@ class Edge;
 
 using EdgeSptrConst = std::shared_ptr<const Edge>;
 
-class Edge {
+class Edge final {
  public:
   Edge(VertexSptrConst start, VertexSptrConst end);
   Edge(VertexSptrConst start, VertexSptrConst end,

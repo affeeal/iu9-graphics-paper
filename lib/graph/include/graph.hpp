@@ -12,7 +12,7 @@ class KLGrid;
 
 using GraphUptr = std::unique_ptr<Graph>;
 
-class Graph {
+class Graph final {
  public:
   Graph(const std::vector<Vertex> &vs);
   Graph(std::vector<Vertex> &&vs);

@@ -13,7 +13,7 @@ class Curve;
 
 using CurveUptrConst = std::unique_ptr<const Curve>;
 
-class Curve {
+class Curve final {
  public:
   Curve(const std::vector<Point> &ps);
   Curve(std::vector<Point> &&ps);

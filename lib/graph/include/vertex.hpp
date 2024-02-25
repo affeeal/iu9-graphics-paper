@@ -10,7 +10,7 @@ class Vertex;
 
 using VertexSptrConst = std::shared_ptr<const Vertex>;
 
-struct Vertex : public bezier::Point {
+struct Vertex final : public bezier::Point {
   std::string label;
 
   Vertex(const double x, const double y, const std::string& label) noexcept;

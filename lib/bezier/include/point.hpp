@@ -10,6 +10,7 @@ struct Point {
   double x, y;
 
   Point(const double x, const double y) noexcept;
+  virtual ~Point() {};
 
   bool operator==(const Point &rhs) const noexcept;
   Point operator+(const Point &rhs) const noexcept;
