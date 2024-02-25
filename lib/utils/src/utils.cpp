@@ -5,8 +5,7 @@
 
 namespace utils {
 
-Vector::Vector(const bezier::Point &point)
-    : x_(point.get_x()), y_(point.get_y()) {}
+Vector::Vector(const bezier::Point &p) : x_(p.x), y_(p.y) {}
 
 Vector::Vector(const graph::Edge &edge) {
   if (!edge.IsStraightLine()) {
@@ -17,8 +16,8 @@ Vector::Vector(const graph::Edge &edge) {
   const auto start = edge.get_start();
   const auto end = edge.get_end();
 
-  x_ = end->get_x() - start->get_x();
-  y_ = end->get_y() - start->get_y();
+  x_ = end->x - start->x;
+  y_ = end->y - start->y;
 }
 
 double Vector::AngleWith(const Vector &other) const {

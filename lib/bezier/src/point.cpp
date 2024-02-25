@@ -4,6 +4,8 @@
 
 namespace bezier {
 
+Point::Point(const double x, const double y) noexcept : x(x), y(y) {}
+
 bool Point::operator==(const Point &rhs) const noexcept {
   return x == rhs.x && y == rhs.y;
 }

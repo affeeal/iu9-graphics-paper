@@ -176,7 +176,7 @@ std::pair<double, double> NodeToCoordinates(std::string &&node) {
 
 void HandleNodeCommand(
     std::string &&command,
-    std::unordered_map<std::string, VertexSptr> &labels_to_vertices) {
+    std::unordered_map<std::string, VertexSptrConst> &labels_to_vertices) {
   auto nodes = GetNodes(std::move(command));
   assert(nodes.size() == 2);  // label and appropriate coordinates
 
@@ -187,14 +187,15 @@ void HandleNodeCommand(
 
 std::vector<bezier::Point> NodesToPoints(
     std::vector<std::string> &&nodes,
-    const std::unordered_map<std::string, VertexSptr> &labels_to_vertices) {
+    const std::unordered_map<std::string, VertexSptrConst>
+        &labels_to_vertices) {
   std::vector<bezier::Point> points;
   points.reserve(nodes.size());
 
   for (auto i = 0; i < nodes.size(); i++) {
     if (i == 0 || i == nodes.size() - 1) {
       const auto &vertex = labels_to_vertices.at(std::move(nodes[i]));
-      points.push_back(bezier::Point(vertex->get_x(), vertex->get_y()));
+      points.push_back(bezier::Point(vertex->x, vertex->y));
     } else {
       const auto coordinates = NodeToCoordinates(std::move(nodes[i]));
       points.push_back(bezier::Point(coordinates.first, coordinates.second));
@@ -204,9 +205,9 @@ std::vector<bezier::Point> NodesToPoints(
   return points;
 }
 
-std::vector<bezier::CurveUptr> CurvesByPoints(
+std::vector<bezier::CurveUptrConst> CurvesByPoints(
     std::vector<bezier::Point> &&points) {
-  std::vector<bezier::CurveUptr> curves;
+  std::vector<bezier::CurveUptrConst> curves;
   curves.reserve((points.size() + 1) / kCurveSize);
 
   for (auto i = 0; i < curves.capacity(); i++) {
@@ -224,9 +225,9 @@ std::vector<bezier::CurveUptr> CurvesByPoints(
   return curves;
 }
 
-void HandleDrawCommand(
-    std::string &&command, std::vector<EdgeSptr> &edges,
-    const std::unordered_map<std::string, VertexSptr> &labels_to_vertices) {
+void HandleDrawCommand(std::string &&command, std::vector<EdgeSptrConst> &edges,
+                       const std::unordered_map<std::string, VertexSptrConst>
+                           &labels_to_vertices) {
   auto nodes = GetNodes(std::move(command));
 
   if (nodes.size() == 1) {
@@ -250,57 +251,36 @@ void HandleDrawCommand(
 
 Graph::Graph(const std::vector<Vertex> &vertices) {
   for (const auto &vertex : vertices) {
-    vertices_.push_back(std::make_shared<Vertex>(vertex));
+    vs_.push_back(std::make_shared<const Vertex>(vertex));
   }
 }
 
 Graph::Graph(std::vector<Vertex> &&vertices) {
   for (auto &vertex : vertices) {
-    vertices_.push_back(std::make_shared<Vertex>(std::move(vertex)));
+    vs_.push_back(std::make_shared<const Vertex>(std::move(vertex)));
   }
 }
 
-bool Graph::operator==(const Graph &other) const {
-  for (const auto &vertex : vertices_) {
-    const auto compare = [&vertex](const VertexSptr &other_vertex) {
-      return *vertex == *other_vertex;
-    };
+Graph::Graph(std::vector<VertexSptrConst> &&vs, std::vector<EdgeSptrConst> &&es)
+    : vs_(std::move(vs)), es_(std::move(es)) {}
 
-    if (std::find_if(other.vertices_.begin(), other.vertices_.end(), compare) ==
-        other.vertices_.end()) {
-      return false;
-    }
-  }
+const std::vector<VertexSptrConst> &Graph::get_vertices() const &noexcept {
+  return vs_;
+}
 
-  for (const auto &edge : edges_) {
-    const auto compare = [&edge](const EdgeSptr &other_edge) {
-      return *edge == *other_edge;
-    };
-
-    if (std::find_if(other.edges_.begin(), other.edges_.end(), compare) ==
-        other.edges_.end()) {
-      return false;
-    }
-  }
-
-  return true;
+const std::vector<EdgeSptrConst> &Graph::get_edges() const &noexcept {
+  return es_;
 }
 
 // TODO: rewrite adequately
-GraphUptr Graph::FromFile(const std::string &path, const Filetype type) {
-  if (type == Filetype::kDot) {
+GraphUptr Graph::FromFile(const std::string &path) {
+  {
     const auto command =
         "dot2tex " + path + " -ftikz -tmath -o " + path + ".tex";
     std::system(command.c_str());
   }
 
-  std::ifstream tex_file;
-
-  if (type == Filetype::kDot) {
-    tex_file.open(path + ".tex");
-  } else if (type == Filetype::kTex) {
-    tex_file.open(path);
-  }
+  std::ifstream tex_file(path + ".tex");
 
   if (!tex_file.is_open()) {
     throw std::runtime_error("Failed to open .tex file");
@@ -317,8 +297,8 @@ GraphUptr Graph::FromFile(const std::string &path, const Filetype type) {
     throw std::runtime_error("Failed to find the tikzpicture start");
   }
 
-  std::unordered_map<std::string, VertexSptr> labels_to_vertices;
-  std::vector<EdgeSptr> edges;
+  std::unordered_map<std::string, VertexSptrConst> labels_to_vertices;
+  std::vector<EdgeSptrConst> edges;
 
   while (std::getline(tex_file, line)) {
     if (line.find(kNodeCommandStart) != std::string::npos) {
@@ -330,7 +310,7 @@ GraphUptr Graph::FromFile(const std::string &path, const Filetype type) {
     }
   }
 
-  if (type == Filetype::kDot) {
+  {
     const auto command = "rm " + path + ".tex";
     std::system(command.c_str());
   }
@@ -339,18 +319,17 @@ GraphUptr Graph::FromFile(const std::string &path, const Filetype type) {
   return std::make_unique<Graph>(std::move(vertices), std::move(edges));
 }
 
-void Graph::AddEdge(const std::size_t start, const std::size_t end) {
-  if (start >= vertices_.size() || end >= vertices_.size()) {
+void Graph::AddSLEdge(const std::size_t start, const std::size_t end) {
+  if (start >= vs_.size() || end >= vs_.size()) {
     throw std::out_of_range("Vertex index is out of rangle");
   }
-
-  edges_.push_back(std::make_shared<Edge>(vertices_[start], vertices_[end]));
+  es_.push_back(std::make_shared<const Edge>(vs_[start], vs_[end]));
 }
 
-void Graph::AddEdges(
+void Graph::AddSLEdges(
     const std::vector<std::pair<std::size_t, std::size_t>> &vertex_pairs) {
   for (const auto &[start, end] : vertex_pairs) {
-    AddEdge(start, end);
+    AddSLEdge(start, end);
   }
 }
 
@@ -362,9 +341,9 @@ std::vector<EdgeSptrConst> Graph::CheckKPlanar(const std::size_t k) const {
   const auto intersections = CalculateIntersections();
   std::vector<EdgeSptrConst> unsatisfying_edges;
 
-  for (std::size_t i = 0; i < edges_.size(); i++) {
+  for (std::size_t i = 0; i < es_.size(); i++) {
     if (intersections[i].size() > k) {
-      unsatisfying_edges.push_back(edges_[i]);
+      unsatisfying_edges.push_back(es_[i]);
     }
   }
 
@@ -418,7 +397,7 @@ std::vector<std::vector<EdgeSptrConst>> Graph::CheckKSkewness(
     throw std::logic_error("Graph::CheckKSkewness: failed k >= 1");
   }
 
-  if (edges_.size() <= 1) {
+  if (es_.size() <= 1) {
     return {};
   }
 
@@ -487,8 +466,8 @@ std::vector<std::pair<EdgeSptrConst, EdgeSptrConst>> Graph::CheckAC(
       CalculateIntersections(WriteIntersections::kAsymmetrically);
 
   std::vector<utils::Vector> directions;
-  directions.reserve(edges_.size());
-  for (const auto &edge : edges_) {
+  directions.reserve(es_.size());
+  for (const auto &edge : es_) {
     directions.emplace_back(*edge);
   }
 
@@ -501,7 +480,7 @@ std::vector<std::pair<EdgeSptrConst, EdgeSptrConst>> Graph::CheckAC(
       assert(0 <= angle && angle <= std::numbers::pi / 2);
 
       if (!is_satisfying_angle(angle)) {
-        unsatisfying_edge_pairs.push_back({edges_[i], edges_[j]});
+        unsatisfying_edge_pairs.push_back({es_[i], es_[j]});
       }
     }
   }
@@ -606,7 +585,7 @@ std::vector<KLGrid> Graph::CheckGridFree(const std::size_t k,
 }
 
 bool Graph::IsStraightLine() const {
-  for (const auto &edge : edges_) {
+  for (const auto &edge : es_) {
     if (!edge->IsStraightLine()) {
       return false;
     }
@@ -622,7 +601,7 @@ std::vector<EdgeSptrConst> Graph::EdgesByIndices(
   edges.reserve(indices.size());
 
   for (const auto index : indices) {
-    edges.push_back(edges_[index]);
+    edges.push_back(es_[index]);
   }
 
   return edges;
@@ -631,11 +610,11 @@ std::vector<EdgeSptrConst> Graph::EdgesByIndices(
 template <typename Set>
 std::vector<Set> Graph::CalculateIntersections(
     const WriteIntersections mode) const {
-  std::vector<Set> intersections(edges_.size());
+  std::vector<Set> intersections(es_.size());
 
-  for (auto i = 0; i < edges_.size() - 1; i++) {
-    for (auto j = i + 1; j < edges_.size(); j++) {
-      if (edges_[i]->IsIntersect(*edges_[j])) {
+  for (auto i = 0; i < es_.size() - 1; i++) {
+    for (auto j = i + 1; j < es_.size(); j++) {
+      if (es_[i]->IsIntersect(*es_[j])) {
         intersections[i].insert(j);
         if (mode == WriteIntersections::kSymmetrically) {
           intersections[j].insert(i);
@@ -645,24 +624,6 @@ std::vector<Set> Graph::CalculateIntersections(
   }
 
   return intersections;
-}
-
-std::ostream &operator<<(std::ostream &os, const KLGrid &grid) {
-  os << "{[";
-
-  for (std::size_t i = 0; i < grid.k_group.size() - 1; i++) {
-    os << *grid.k_group[i] << ", ";
-  }
-
-  os << *grid.k_group.back() << "], [";
-
-  for (std::size_t i = 0; i < grid.l_group.size() - 1; i++) {
-    os << *grid.l_group[i] << ", ";
-  }
-
-  os << *grid.k_group.back() << "]}";
-
-  return os;
 }
 
 }  // namespace graph

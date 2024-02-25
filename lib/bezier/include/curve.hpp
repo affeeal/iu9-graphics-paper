@@ -7,6 +7,12 @@
 
 namespace bezier {
 
+constexpr auto kDefaultThreshold = 1e-3;
+
+class Curve;
+
+using CurveUptrConst = std::unique_ptr<const Curve>;
+
 class Curve {
  public:
   Curve(const std::vector<Point> &ps);
@@ -16,12 +22,12 @@ class Curve {
 
   const std::vector<Point> &get_points() const &noexcept { return ps_; }
 
-  Rectangle BoundingRectangle() const;
+  Rectangle Bound() const;
   std::pair<std::unique_ptr<Curve>, std::unique_ptr<Curve>> Split(
       const double t) const;
-  bool IsIntersect(const Curve &c, const double eps = utils::kEps) const;
+  bool IsIntersect(const Curve &c, const double eps = kDefaultThreshold) const;
   std::vector<Point> Intersect(const Curve &c,
-                               const double eps = utils::kEps) const;
+                               const double eps = kDefaultThreshold) const;
   void Dump(std::ostream &os) const;
 
  private:

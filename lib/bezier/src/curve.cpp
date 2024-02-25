@@ -22,7 +22,7 @@ std::ostream &operator<<(std::ostream &os, const Curve &rhs) {
   return os;
 }
 
-Rectangle Curve::BoundingRectangle() const {
+Rectangle Curve::Bound() const {
   auto leftmost_x = std::numeric_limits<double>::max();
   auto topmost_y = std::numeric_limits<double>::min();
   auto rightmost_x = std::numeric_limits<double>::min();
@@ -75,8 +75,8 @@ std::vector<Point> Curve::Intersect(const Curve &c, const double eps) const {
 
 void Curve::Intersect(std::vector<Point> &ps, const Curve &c1, const Curve &c2,
                       const double eps) const {
-  const auto r1 = c1.BoundingRectangle();
-  const auto r2 = c2.BoundingRectangle();
+  const auto r1 = c1.Bound();
+  const auto r2 = c2.Bound();
 
   if (!r1.IsOverlap(r2)) {
     return;
@@ -122,34 +122,33 @@ void Curve::CheckPointsSizeInvariant() const {
   }
 }
 
-void Curve::SplitDeCasteljau(std::vector<Point> &first_curve_points,
-                             std::vector<Point> &second_curve_points,
-                             const std::vector<Point> &points,
+void Curve::SplitDeCasteljau(std::vector<Point> &ps1, std::vector<Point> &ps2,
+                             const std::vector<Point> &ps,
                              const double t) const {
-  if (points.size() == 1) {
-    first_curve_points.push_back(points.front());
-    second_curve_points.push_back(points.front());
+  if (ps.size() == 1) {
+    ps1.push_back(ps.front());
+    ps2.push_back(ps.front());
     return;
   }
 
-  const auto new_size = points.size() - 1;
-  std::vector<Point> new_points;
-  new_points.reserve(new_size);
+  const auto new_size = ps.size() - 1;
+  std::vector<Point> new_ps;
+  new_ps.reserve(new_size);
 
-  first_curve_points.push_back(points.front());
-  second_curve_points.push_back(points.back());
+  ps1.push_back(ps.front());
+  ps2.push_back(ps.back());
 
   for (std::size_t i = 0; i < new_size; i++) {
-    new_points.push_back(points[i] * (1 - t) + points[i + 1] * t);
+    new_ps.push_back(ps[i] * (1 - t) + ps[i + 1] * t);
   }
 
-  SplitDeCasteljau(first_curve_points, second_curve_points, new_points, t);
+  SplitDeCasteljau(ps1, ps2, new_ps, t);
 }
 
 bool Curve::IsIntersect(const Curve &c1, const Curve &c2,
                         const double eps) const {
-  const auto r1 = c1.BoundingRectangle();
-  const auto r2 = c2.BoundingRectangle();
+  const auto r1 = c1.Bound();
+  const auto r2 = c2.Bound();
 
   if (!r1.IsOverlap(r2)) {
     return false;

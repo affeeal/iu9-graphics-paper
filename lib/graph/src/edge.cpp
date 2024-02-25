@@ -4,79 +4,55 @@
 #include <iostream>
 
 #include "curve.hpp"
-#include "point.hpp"
 #include "utils.hpp"
 
 namespace graph {
 
 Edge::Edge(VertexSptrConst start, VertexSptrConst end)
-    : start_(start), end_(end) {
-  std::vector<bezier::Point> points{start->AsPoint(), end->AsPoint()};
-  curves_.push_back(std::make_unique<bezier::Curve>(std::move(points)));
+    : start_(std::move(start)), end_(std::move(end)) {
+  cs_.push_back(std::make_unique<const bezier::Curve>(
+      std::vector<bezier::Point>{*start_, *end_}));
 }
 
 Edge::Edge(VertexSptrConst start, VertexSptrConst end,
-           std::vector<bezier::CurveUptr> &&curves)
-    : start_(std::move(start)),
-      end_(std::move(end)),
-      curves_(std::move(curves)) {}
-
-bool Edge::operator==(const Edge &other) const {
-  if (*start_ != *other.start_ || *end_ != *other.end_ ||
-      curves_.size() != other.curves_.size()) {
-    return false;
-  }
-
-  for (auto i = 0; i < curves_.size(); i++) {
-    if (*curves_[i] != *other.curves_[i]) {
-      return false;
-    }
-  }
-
-  return true;
+           std::vector<bezier::CurveUptrConst> &&curves)
+    : start_(std::move(start)), end_(std::move(end)), cs_(std::move(curves)) {
+  CheckCurvesSizeInvariant();
 }
 
-std::ostream &operator<<(std::ostream &os, const Edge &e) {
-  std::cout << '{' << *e.start_ << ", " << *e.end_ << ", [";
+const VertexSptrConst &Edge::get_start() const &noexcept { return start_; }
 
-  for (std::size_t i = 0; i < e.curves_.size() - 1; i++) {
-    std::cout << *e.curves_[i] << ", ";
-  }
+const VertexSptrConst &Edge::get_end() const &noexcept { return end_; }
 
-  std::cout << *e.curves_.back() << "]}";
-
-  return os;
+const std::vector<bezier::CurveUptrConst> &Edge::get_curves() const &noexcept {
+  return cs_;
 }
 
 bool Edge::IsIntersect(const Edge &e) const {
-  const auto start = start_->AsPoint();
-  const auto end = end_->AsPoint();
+  const auto starts_match = (&*start_ == &*e.start_);
+  const auto start_mathes_end = (&*start_ == &*e.end_);
+  const auto end_matches_start = (&*end_ == &*e.start_);
+  const auto ends_match = (&*end_ == &*e.end_);
 
-  const auto starts_match = (*start_ == *e.start_);
-  const auto start_mathes_end = (*start_ == *e.end_);
-  const auto end_matches_start = (*end_ == *e.start_);
-  const auto ends_match = (*end_ == *e.end_);
+  const auto back_curve = cs_.size() - 1;
+  const auto e_back_curve = e.cs_.size() - 1;
 
-  const auto back_curve = curves_.size() - 1;
-  const auto e_back_curve = e.curves_.size() - 1;
-
-  for (std::size_t i = 0; i < curves_.size(); i++) {
-    for (std::size_t j = 0; j < e.curves_.size(); j++) {
+  for (std::size_t i = 0; i < cs_.size(); ++i) {
+    for (std::size_t j = 0; j < e.cs_.size(); ++j) {
       if (i == 0 && (j == 0 && starts_match ||
                      j == e_back_curve && start_mathes_end) ||
           i == back_curve && (j == 0 && end_matches_start ||
                               j == e_back_curve && ends_match)) {
-        const auto intersections = curves_[i]->Intersect(*e.curves_[j]);
-        const auto is_approximately_equal = [&start,
-                                             &end](const bezier::Point &p) {
-          return start.IsInNeighborhood(p) || end.IsInNeighborhood(p);
+        const auto ps = cs_[i]->Intersect(*e.cs_[j]);
+
+        const auto is_boundary = [this](const bezier::Point &p) {
+          return start_->IsInNeighborhood(p) || end_->IsInNeighborhood(p);
         };
 
-        if (std::find_if_not(intersections.begin(), intersections.end(),
-                             is_approximately_equal) != intersections.end()) {
+        if (std::find_if_not(ps.begin(), ps.end(), is_boundary) != ps.end()) {
           return true;
         };
-      } else if (curves_[i]->IsIntersect(*e.curves_[j])) {
+      } else if (cs_[i]->IsIntersect(*e.cs_[j])) {
         return true;
       }
     }
@@ -86,27 +62,28 @@ bool Edge::IsIntersect(const Edge &e) const {
 }
 
 bool Edge::IsStraightLine() const {
-  const auto &points = curves_.front()->get_points();
+  if (cs_.size() > 1) {
+    return false;  // no point in doing straight-line edge from several curves
+  }
+
+  const auto &points = cs_.front()->get_points();
   const auto start = points.front();
-  const utils::Vector main_direction(points[1] - start);
+  const utils::Vector main_dir(points[1] - start);
 
   for (std::size_t i = 2; i < points.size(); i++) {
-    const utils::Vector direction(points[i] - start);
-    if (!direction.CollinearTo(main_direction)) {
+    const utils::Vector dir(points[i] - start);
+    if (!dir.CollinearTo(main_dir)) {
       return false;
     }
   }
 
-  for (std::size_t i = 1; i < curves_.size(); i++) {
-    for (const auto &p : curves_[i]->get_points()) {
-      const utils::Vector direction(p - start);
-      if (!direction.CollinearTo(main_direction)) {
-        return false;
-      }
-    }
-  }
-
   return true;
+}
+
+void Edge::CheckCurvesSizeInvariant() const {
+  if (cs_.empty()) {
+    throw std::logic_error("Edge curves cannot be empty");
+  }
 }
 
 }  // namespace graph

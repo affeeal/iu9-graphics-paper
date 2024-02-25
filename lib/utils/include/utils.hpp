@@ -17,9 +17,8 @@ constexpr auto kEps = 10e-4;  // or 1e-4?
 
 class Vector {
  public:
-  Vector() = default;
-  explicit Vector(const bezier::Point &point);
-  explicit Vector(const graph::Edge &edge);
+  Vector(const bezier::Point &p);
+  Vector(const graph::Edge &edge);
 
   double AngleWith(const Vector &other) const;
   double ScalarProduct(const Vector &other) const;
