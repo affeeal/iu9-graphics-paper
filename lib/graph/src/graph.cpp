@@ -12,6 +12,7 @@
 
 #include "edge.hpp"
 #include "utils.hpp"
+#include "vector.hpp"
 
 namespace graph {
 

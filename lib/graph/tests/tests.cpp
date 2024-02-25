@@ -1,12 +1,9 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
-#include <cassert>
 #include <cmath>
 
-#include "edge.hpp"
 #include "graph.hpp"
-#include "vertex.hpp"
 
 namespace graph {
 

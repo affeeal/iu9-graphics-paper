@@ -4,7 +4,7 @@
 #include <iostream>
 
 #include "curve.hpp"
-#include "utils.hpp"
+#include "vector.hpp"
 
 namespace graph {
 
