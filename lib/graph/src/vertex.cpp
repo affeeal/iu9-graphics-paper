@@ -1,29 +1,13 @@
 #include "vertex.hpp"
 
-#include <iostream>
-
 namespace graph {
 
-Vertex::Vertex(const Vertex& other)
-    : x_(other.x_), y_(other.y_), label_(other.label_) {}
+Vertex::Vertex(const double x, const double y,
+               const std::string& label) noexcept
+    : bezier::Point(x, y), label(label) {}
 
-Vertex::Vertex(Vertex&& other)
-    : x_(other.x_), y_(other.y_), label_(std::move(other.label_)) {}
-
-Vertex::Vertex(const double x, const double y) : x_(x), y_(y), label_() {}
-
-Vertex::Vertex(const double x, const double y, const std::string& label)
-    : x_(x), y_(y), label_(label) {}
-
-bool Vertex::operator==(const Vertex& other) const {
-  return x_ == other.x_ && y_ == other.y_ && label_ == other.label_;
+void Vertex::Dump(std::ostream& os) const {
+  os << '{' << x << ", " << y << ", " << label << '}';
 }
-
-std::ostream& operator<<(std::ostream& os, const Vertex& v) {
-  std::cout << '(' << v.label_ << ": " << v.x_ << ", " << v.y_ << ')';
-  return os;
-}
-
-bezier::Point Vertex::AsPoint() const { return bezier::Point(x_, y_); }
 
 }  // namespace graph

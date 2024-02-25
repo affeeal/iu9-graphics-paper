@@ -1,29 +1,25 @@
 #pragma once
 
-#include <memory>
-
 #include "point.hpp"
 
 namespace bezier {
 
 class Rectangle;
 
-using RectangleUptr = std::unique_ptr<Rectangle>;
-
-class Rectangle {
+class Rectangle final {
  public:
-  Rectangle() = default;
-  Rectangle(Point top_left, Point bottom_right);
+  Rectangle(const Point &top_left, const Point &bottom_right);
 
-  double Area() const;
-  double Perimeter() const;
-  bool IsOverlap(const Rectangle &other) const;
-  Point Center() const;
+  const Point &get_top_left() const &noexcept;
+  const Point &get_bottom_right() const &noexcept;
 
-  const Point &get_top_left() const { return top_left_; }
-  const Point &get_bottom_right() const { return bottom_right_; }
+  double Perimeter() const noexcept;
+  bool IsOverlap(const Rectangle &r) const noexcept;
+  Point Center() const noexcept;
 
  private:
+  void CheckPointsMutualPositionInvariant() const;
+
   Point top_left_;
   Point bottom_right_;
 };

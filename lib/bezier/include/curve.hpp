@@ -1,46 +1,48 @@
 #pragma once
 
+#include <memory>
 #include <vector>
 
-#include "point.hpp"
 #include "rectangle.hpp"
 
 namespace bezier {
 
-constexpr double kThreshold = 10e-4;
+constexpr auto kDefaultThreshold = 1e-3;
 
 class Curve;
 
-using CurveUptr = std::unique_ptr<Curve>;
+using CurveUptrConst = std::unique_ptr<const Curve>;
 
-class Curve {
+class Curve final {
  public:
-  Curve() = default;
-  explicit Curve(std::vector<Point> &&points);
+  Curve(const std::vector<Point> &ps);
+  Curve(std::vector<Point> &&ps);
 
-  bool operator==(const Curve &other) const;
-  friend std::ostream &operator<<(std::ostream &os, const Curve &curve);
+  bool operator==(const Curve &rhs) const;
 
-  const std::vector<Point> &get_points() const { return points_; }
+  const std::vector<Point> &get_points() const &noexcept;
 
-  RectangleUptr BoundingBox() const;
-  std::pair<CurveUptr, CurveUptr> Split(const double t) const;
-  bool IsIntersect(const Curve &other,
-                   const double threshold = kThreshold) const;
-  std::vector<Point> Intersect(const Curve &other,
-                               const double threshould = kThreshold) const;
+  Rectangle BoundingRectangle() const;
+  std::pair<std::unique_ptr<Curve>, std::unique_ptr<Curve>> Split(
+      const double t) const;
+  bool IsIntersect(const Curve &c, const double eps = kDefaultThreshold) const;
+  std::vector<Point> Intersect(const Curve &c,
+                               const double eps = kDefaultThreshold) const;
+  void Dump(std::ostream &os) const;
 
  private:
-  void SplitDeCasteljau(std::vector<Point> &first_curve_points,
-                        std::vector<Point> &second_curve_points,
-                        const std::vector<Point> &points, const double t) const;
-  void CheckIntersection(bool &is_found, const Curve &first,
-                         const Curve &second, const double threshold) const;
-  void Intersect(std::vector<Point> &intersection_points, const Curve &first,
-                 const Curve &second, const double threshold) const;
-  double CompletionMetric(const Rectangle &r1, const Rectangle &r2) const;
+  void CheckPointsSizeInvariant() const;
+  void SplitDeCasteljau(std::vector<Point> &ps1, std::vector<Point> &ps2,
+                        const std::vector<Point> &ps, const double t) const;
+  bool IsIntersect(const Curve &c1, const Curve &c2, const double eps) const;
+  void Intersect(std::vector<Point> &ps, const Curve &c1, const Curve &c2,
+                 const double eps) const;
+  double CompletionMetric(const Rectangle &r1,
+                          const Rectangle &r2) const noexcept;
 
-  std::vector<Point> points_;
+  std::vector<Point> ps_;
 };
+
+std::ostream &operator<<(std::ostream &os, const Curve &rhs);
 
 }  // namespace bezier

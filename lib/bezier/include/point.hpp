@@ -4,28 +4,25 @@
 
 namespace bezier {
 
-constexpr double kEpsilon = 10e-4;
+constexpr auto kDefaultNeighborhood = 1e-3;
 
-class Point {
- public:
-  Point() = default;
-  Point(const double x, const double y);
+struct Point {
+  double x, y;
 
-  bool operator==(const Point &other) const;
-  Point operator+(const Point &other) const;
-  Point operator-(const Point &other) const;
-  Point operator*(const double other) const;
-  friend std::ostream &operator<<(std::ostream &os, const Point &p);
+  Point(const double x, const double y) noexcept;
+  virtual ~Point(){};
 
-  Point CenterWith(const Point &p) const;
-  bool IsInNeighborhood(const Point &p, const double epsilon = kEpsilon) const;
+  bool operator==(const Point &rhs) const noexcept;
+  Point operator+(const Point &rhs) const noexcept;
+  Point operator-(const Point &rhs) const noexcept;
+  Point operator*(const double rhs) const noexcept;
 
-  double get_x() const { return x_; }
-  double get_y() const { return y_; }
-
- private:
-  double x_;
-  double y_;
+  Point CenterWith(const Point &p) const noexcept;
+  bool IsInNeighborhood(const Point &p,
+                        const double eps = kDefaultNeighborhood) const noexcept;
+  virtual void Dump(std::ostream &os) const;
 };
+
+std::ostream &operator<<(std::ostream &os, const Point &p);
 
 }  // namespace bezier

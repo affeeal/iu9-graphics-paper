@@ -3,33 +3,14 @@
 #include <algorithm>
 #include <set>
 #include <stdexcept>
-#include <string>
-#include <unordered_map>
-#include <unordered_set>
 #include <vector>
-
-#include "edge.hpp"
-#include "point.hpp"
 
 namespace utils {
 
-class Vector {
- public:
-  Vector() = default;
-  explicit Vector(const bezier::Point &point);
-  explicit Vector(const graph::Edge &edge);
+static constexpr auto kCombsBadParamsMsg =
+    "Combinations n must be greater or equal to k";
 
-  double AngleWith(const Vector &other) const;
-  double ScalarProduct(const Vector &other) const;
-  double Norm() const;
-  bool CollinearTo(const Vector &other) const;
-
- private:
-  double x_;
-  double y_;
-};
-
-std::size_t Factorial(const std::size_t n);
+constexpr std::size_t Factorial(const std::size_t n) noexcept;
 
 std::size_t Combinations(const std::size_t n, const std::size_t k);
 
@@ -39,29 +20,29 @@ std::vector<std::vector<Value>> Combinations(const std::vector<Value> &values,
   const auto n = values.size();
 
   if (n < k) {
-    throw std::logic_error("N must be greater or equal to K");
+    throw std::logic_error(kCombsBadParamsMsg);
   }
 
-  std::vector<std::vector<Value>> combinations;
-  combinations.reserve(Combinations(n, k));
+  std::vector<std::vector<Value>> cs;
+  cs.reserve(Combinations(n, k));
 
   std::vector<bool> mask(k, true);
   mask.resize(n, false);
 
   do {
-    std::vector<Value> combination;
-    combination.reserve(k);
+    std::vector<Value> c;
+    c.reserve(k);
 
-    for (auto i = 0; i < n; i++) {
+    for (std::size_t i = 0; i < n; ++i) {
       if (mask[i]) {
-        combination.push_back(values[i]);
+        c.push_back(values[i]);
       }
     }
 
-    combinations.push_back(std::move(combination));
+    cs.push_back(std::move(c));
   } while (std::prev_permutation(mask.begin(), mask.end()));
 
-  return combinations;
+  return cs;
 }
 
 template <typename Value>
@@ -69,26 +50,26 @@ std::vector<Value> Intersect(const std::set<Value> &s1,
                              const std::set<Value> &s2) {
   std::vector<Value> intersection;
 
-  auto i1 = s1.begin();
-  auto i2 = s2.begin();
+  auto it1 = s1.begin();
+  auto it2 = s2.begin();
 
-  while (i1 != s1.end() && i2 != s2.end()) {
-    while (i1 != s1.end() && *i1 < *i2) {
-      i1++;
+  while (it1 != s1.end() && it2 != s2.end()) {
+    while (it1 != s1.end() && *it1 < *it2) {
+      ++it1;
     }
 
-    while (i2 != s2.end() && *i2 < *i1) {
-      i2++;
+    while (it2 != s2.end() && *it2 < *it1) {
+      ++it2;
     }
 
-    if (i1 == s1.end() || i2 == s2.end()) {
+    if (it1 == s1.end() || it2 == s2.end()) {
       break;
     }
 
-    if (*i1 == *i2) {
-      intersection.push_back(*i1);
-      i1++;
-      i2++;
+    if (*it1 == *it2) {
+      intersection.push_back(*it1);
+      ++it1;
+      ++it2;
     }
   }
 

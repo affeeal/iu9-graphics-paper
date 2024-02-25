@@ -18,14 +18,20 @@ TEST(PointTest, Addition) {
 TEST(PointTest, MultiplicationByANumber) {
   const auto point = Point(0.4, 0.8) * 0.2;
 
-  EXPECT_DOUBLE_EQ(point.get_x(), 0.08);
-  EXPECT_DOUBLE_EQ(point.get_y(), 0.16);
+  EXPECT_DOUBLE_EQ(point.x, 0.08);
+  EXPECT_DOUBLE_EQ(point.y, 0.16);
 }
 
-TEST(RectangleTest, CalculateArea) {
-  const Rectangle rectangle(Point(0.1, 0.6), Point(0.5, 0.3));
+TEST(RectangleTest, Perimeter) {
+  EXPECT_DOUBLE_EQ(Rectangle({0.1, 0.4}, {0.3, 0.1}).Perimeter(), 1);
+}
 
-  EXPECT_DOUBLE_EQ(rectangle.Area(), 0.12);
+TEST(RectangleTest, Perimeter_DegenerateHorizontally) {
+  EXPECT_DOUBLE_EQ(Rectangle({0.1, 0.4}, {0.3, 0.4}).Perimeter(), 0.4);
+}
+
+TEST(RectangleTest, Perimeter_DegenerateVertically) {
+  EXPECT_DOUBLE_EQ(Rectangle({0.1, 0.4}, {0.1, 0.1}).Perimeter(), 0.6);
 }
 
 TEST(RectangleTest, NoOverlap) {
@@ -60,30 +66,30 @@ TEST(RectangleTest, OverlapNested) {
   EXPECT_TRUE(second.IsOverlap(first));
 }
 
-TEST(CurveTest, LinearCurveBoundingBox) {
+TEST(CurveTest, LinearCurveBoundingRectangle) {
   const Curve curve(std::vector<Point>{Point(0.6, 0.5), Point(0.4, 0.3)});
-  const auto box = curve.BoundingBox();
+  const auto box = curve.BoundingRectangle();
 
-  EXPECT_EQ(box->get_top_left(), Point(0.4, 0.5));
-  EXPECT_EQ(box->get_bottom_right(), Point(0.6, 0.3));
+  EXPECT_EQ(box.get_top_left(), Point(0.4, 0.5));
+  EXPECT_EQ(box.get_bottom_right(), Point(0.6, 0.3));
 }
 
-TEST(CurveTest, QuadraticCurveBoundingBox) {
+TEST(CurveTest, QuadraticCurveBoundingRectangle) {
   const Curve curve(
       std::vector<Point>{Point(0.2, 0.4), Point(0.4, 0.2), Point(0.6, 0.4)});
-  const auto box = curve.BoundingBox();
+  const auto box = curve.BoundingRectangle();
 
-  EXPECT_EQ(box->get_top_left(), Point(0.2, 0.4));
-  EXPECT_EQ(box->get_bottom_right(), Point(0.6, 0.2));
+  EXPECT_EQ(box.get_top_left(), Point(0.2, 0.4));
+  EXPECT_EQ(box.get_bottom_right(), Point(0.6, 0.2));
 }
 
-TEST(CurveTest, QubicCurveBoundingBox) {
+TEST(CurveTest, QubicCurveBoundingRectangle) {
   const Curve curve(std::vector<Point>{Point(0.1, 0.1), Point(0.4, 0.2),
                                        Point(0.6, 0.6), Point(0.4, 0.4)});
-  const auto box = curve.BoundingBox();
+  const auto box = curve.BoundingRectangle();
 
-  EXPECT_EQ(box->get_top_left(), Point(0.1, 0.6));
-  EXPECT_EQ(box->get_bottom_right(), Point(0.6, 0.1));
+  EXPECT_EQ(box.get_top_left(), Point(0.1, 0.6));
+  EXPECT_EQ(box.get_bottom_right(), Point(0.6, 0.1));
 }
 
 TEST(CurveTest, SplitLinearCurve) {
