@@ -42,7 +42,7 @@ TEST(Graph, 1Planar) {
   g.AddSLEdges({{0, 1}, {1, 2}, {2, 0}, {3, 4}, {4, 2}});
   const auto& es = g.get_edges();
 
-  const auto unsat_1p = g.CheckKPlanar(1);
+  const auto unsat_1p = g.CheckPlanar(1);
   ASSERT_EQ(unsat_1p.size(), 2);
 
   for (const auto& e : {es[0], es[3]}) {
@@ -50,7 +50,7 @@ TEST(Graph, 1Planar) {
               unsat_1p.end());
   }
 
-  const auto unsat_2p = g.CheckKPlanar(2);
+  const auto unsat_2p = g.CheckPlanar(2);
   ASSERT_EQ(unsat_2p.size(), 0);
 }
 
@@ -66,7 +66,7 @@ TEST(Graph, 4QuasiPlanar) {
   g.AddSLEdges({{0, 1}, {0, 2}, {1, 3}, {2, 3}, {4, 5}, {6, 7}});
   const auto& es = g.get_edges();
 
-  const auto unsat_3qp = g.CheckKQuasiPlanar(3);
+  const auto unsat_3qp = g.CheckQuasiPlanar(3);
   ASSERT_EQ(unsat_3qp.size(), 2);
 
   const std::vector<std::vector<EdgeSptrConst>> expected_unsat_3qp{
@@ -77,7 +77,7 @@ TEST(Graph, 4QuasiPlanar) {
               unsat_3qp.end());
   }
 
-  const auto unsat_4qp = g.CheckKQuasiPlanar(4);
+  const auto unsat_4qp = g.CheckQuasiPlanar(4);
   ASSERT_EQ(unsat_4qp.size(), 0);
 }
 
@@ -110,7 +110,7 @@ TEST(Grap, 5QuasiPlanar) {
                 {14, 15}});
   const auto& es = g.get_edges();
 
-  const auto unsat_3qp = g.CheckKQuasiPlanar(3);
+  const auto unsat_3qp = g.CheckQuasiPlanar(3);
   ASSERT_EQ(unsat_3qp.size(), 8);
 
   const std::vector<std::vector<EdgeSptrConst>> expected_unsat_3qp{
@@ -124,7 +124,7 @@ TEST(Grap, 5QuasiPlanar) {
               unsat_3qp.end());
   }
 
-  const auto unsat_4qp = g.CheckKQuasiPlanar(4);
+  const auto unsat_4qp = g.CheckQuasiPlanar(4);
   ASSERT_EQ(unsat_4qp.size(), 2);
 
   const std::vector<std::vector<EdgeSptrConst>> expected_unsat_4qp{
@@ -137,7 +137,7 @@ TEST(Grap, 5QuasiPlanar) {
               unsat_4qp.end());
   }
 
-  const auto unsat_5qp = g.CheckKQuasiPlanar(5);
+  const auto unsat_5qp = g.CheckQuasiPlanar(5);
   ASSERT_EQ(unsat_5qp.size(), 0);
 }
 
@@ -152,14 +152,14 @@ TEST(Graph, CheckKSkewness) {
            {3, 5, "7"}});
   g.AddSLEdges({{0, 4}, {1, 3}, {2, 6}, {5, 7}});
 
-  auto unsat_1s = g.CheckKSkewness(1);
+  auto unsat_1s = g.CheckSkewness(1);
   ASSERT_EQ(unsat_1s.size(), 0);
 
   g.AddVertices({{3, 6, "8"}, {5, 3, "9"}});
   g.AddSLEdge(8, 9);
   const auto& es = g.get_edges();
 
-  unsat_1s = g.CheckKSkewness(1);
+  unsat_1s = g.CheckSkewness(1);
   ASSERT_EQ(unsat_1s.size(), 2);
 
   const std::vector<std::vector<EdgeSptrConst>> expected_unsat_1s{{es[2]},
@@ -170,7 +170,7 @@ TEST(Graph, CheckKSkewness) {
               unsat_1s.end());
   }
 
-  const auto unsat_2s = g.CheckKSkewness(2);
+  const auto unsat_2s = g.CheckSkewness(2);
   ASSERT_EQ(unsat_2s.size(), 0);
 }
 

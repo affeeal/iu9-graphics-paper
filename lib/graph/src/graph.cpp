@@ -164,37 +164,37 @@ enum class CliqueComplementResult {
   kSuccess,
 };
 
-std::unordered_set<std::size_t> RemainKQuasiPlanarUnsatisfyingEdges(
+std::unordered_set<std::size_t> kQuasiPlanarCandidates(
     std::vector<std::unordered_set<std::size_t>> &intersections,
     const std::size_t k) {
-  std::unordered_set<std::size_t> unsatisfying_edges;
+  std::unordered_set<std::size_t> candidates;
 
   for (std::size_t i = 0; i < intersections.size(); ++i) {
     if (intersections[i].size() >= k - 1) {
-      unsatisfying_edges.insert(i);
+      candidates.insert(i);
     }
   }
 
-  for (auto an_edge_erased = false; an_edge_erased; an_edge_erased = false) {
-    if (unsatisfying_edges.size() < k) {
+  for (auto candidate_deleted = false; candidate_deleted; candidate_deleted = false) {
+    if (candidates.size() < k) {
       return {};
     }
 
-    for (const auto edge : unsatisfying_edges) {
-      for (const auto intersected_edge : intersections[edge]) {
-        if (!unsatisfying_edges.contains(intersected_edge)) {
-          intersections[edge].erase(intersected_edge);
+    for (const auto candidate : candidates) {
+      for (const auto edge : intersections[candidate]) {
+        if (!candidates.contains(edge)) {
+          intersections[candidate].erase(edge);
         }
       }
 
-      if (intersections[edge].size() < k - 1) {
-        an_edge_erased = true;
-        unsatisfying_edges.erase(edge);
+      if (intersections[candidate].size() < k - 1) {
+        candidate_deleted = true;
+        candidates.erase(candidate);
       }
     }
   }
 
-  return unsatisfying_edges;
+  return candidates;
 }
 
 CliqueComplementResult PickCliques(
@@ -339,7 +339,7 @@ void Graph::AddSLEdges(
   }
 }
 
-std::vector<EdgeSptrConst> Graph::CheckKPlanar(const std::size_t k) const {
+std::vector<EdgeSptrConst> Graph::CheckPlanar(const std::size_t k) const {
   if (k < 1) {
     throw std::logic_error("Graph::CheckKPlanar: failed k >= 1");
   }
@@ -356,23 +356,22 @@ std::vector<EdgeSptrConst> Graph::CheckKPlanar(const std::size_t k) const {
   return unsatisfying_edges;
 }
 
-std::vector<std::vector<EdgeSptrConst>> Graph::CheckKQuasiPlanar(
+std::vector<std::vector<EdgeSptrConst>> Graph::CheckQuasiPlanar(
     const std::size_t k) const {
   if (k < 3) {
     throw std::logic_error("Graph::CheckKQuasiPlanar: failed k >= 3");
   }
 
   auto intersections = CalculateIntersections();
-  auto unsatisfying_edges =
-      RemainKQuasiPlanarUnsatisfyingEdges(intersections, k);
+  auto unsat_edges = kQuasiPlanarCandidates(intersections, k);
 
-  if (unsatisfying_edges.empty()) {
+  if (unsat_edges.empty()) {
     return {};
   }
 
   std::unordered_map<std::size_t, std::unique_ptr<std::set<std::size_t>>>
       cliques;
-  for (const auto edge : unsatisfying_edges) {
+  for (const auto edge : unsat_edges) {
     PickCliques(cliques, {}, intersections, edge, k);
   }
 
@@ -397,7 +396,7 @@ std::vector<std::vector<EdgeSptrConst>> Graph::CheckKQuasiPlanar(
   return k_cliques;
 }
 
-std::vector<std::vector<EdgeSptrConst>> Graph::CheckKSkewness(
+std::vector<std::vector<EdgeSptrConst>> Graph::CheckSkewness(
     const std::size_t k) const {
   if (k < 1) {
     throw std::logic_error("Graph::CheckKSkewness: failed k >= 1");

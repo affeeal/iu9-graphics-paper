@@ -4,8 +4,6 @@
 
 namespace bezier {
 
-class Rectangle;
-
 class Rectangle final {
  public:
   Rectangle(const Point &top_left, const Point &bottom_right);
