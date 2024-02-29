@@ -2,6 +2,7 @@
 
 #include <boost/functional/hash.hpp>
 #include <fstream>
+#include <iostream>
 
 #include "edge.hpp"
 #include "utils.hpp"
@@ -122,7 +123,7 @@ std::vector<bezier::Point> NodesToPoints(
 std::vector<bezier::CurveUptrConst> CurvesByPoints(
     const std::vector<bezier::Point> &points) {
   std::vector<bezier::CurveUptrConst> cs;
-  cs.reserve((points.size() + 1) / kTexCurveSize);
+  cs.reserve(1 + (points.size() - kTexCurveSize) / (kTexCurveSize - 1));
 
   for (std::size_t i = 0; i < cs.capacity(); ++i) {
     std::vector<bezier::Point> ps;
@@ -146,15 +147,13 @@ void HandleDrawCommand(std::string &&command, std::vector<EdgeSptrConst> &es,
     return;  // ignore edge attribute
   }
 
-  assert(nodes.size() == kTexCurveSize ||
-         nodes.size() > kTexCurveSize &&
-             nodes.size() % kTexCurveSize == kTexCurveSize - 1);
-
   const auto &start = labels_to_vertices.at(nodes.front());
   const auto &end = labels_to_vertices.at(nodes.back());
 
   const auto points = NodesToPoints(std::move(nodes), labels_to_vertices);
+  std::cerr << "Points' size: " << points.size() << '\n';
   auto curves = CurvesByPoints(points);
+  std::cerr << "Curves' size: " << curves.size() << '\n';
 
   es.push_back(std::make_shared<const Edge>(start, end, std::move(curves)));
 }
@@ -288,6 +287,7 @@ GraphUptr Graph::Graphviz(const std::string &path) {
     if (line.find(kNodeCommandStart) != std::string::npos) {
       HandleNodeCommand(std::move(line), labels_to_vertices);
     } else if (line.find(kDrawCommandStart) != std::string::npos) {
+      std::cerr << line << '\n';
       HandleDrawCommand(std::move(line), es, labels_to_vertices);
     } else if (line.find(kTikzpictureEnd) != std::string::npos) {
       break;
@@ -345,6 +345,17 @@ std::vector<EdgeSptrConst> Graph::CheckPlanar(const std::size_t k) const {
   }
 
   const auto intersections = CalculateIntersections();
+
+  for (std::size_t i = 0; i < es_.size(); ++i) {
+    std::cerr << *es_[i] << ": ";
+
+    for (const auto j : intersections[i]) {
+      std::cerr << *es_[j] << ", ";
+    }
+
+    std::cerr << '\n';
+  }
+
   std::vector<EdgeSptrConst> unsatisfying_edges;
 
   for (std::size_t i = 0; i < es_.size(); i++) {
@@ -617,9 +628,11 @@ std::vector<Set> Graph::CalculateIntersections(
     const WriteIntersections mode) const {
   std::vector<Set> intersections(es_.size());
 
-  for (auto i = 0; i < es_.size() - 1; i++) {
-    for (auto j = i + 1; j < es_.size(); j++) {
+  for (std::size_t i = 0, end = es_.size() - 1; i < end; ++i) {
+    for (std::size_t j = i + 1; j < es_.size(); ++j) {
+        std::cerr << "Intersecting " << *es_[i] << ", " << *es_[j] << '\n';
       if (es_[i]->IsIntersect(*es_[j])) {
+        std::cerr << "Found intersection!" << '\n';
         intersections[i].insert(j);
         if (mode == WriteIntersections::kSymmetrically) {
           intersections[j].insert(i);

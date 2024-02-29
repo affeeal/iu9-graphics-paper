@@ -86,4 +86,13 @@ void Edge::CheckCurvesSizeInvariant() const {
   }
 }
 
+void Edge::Dump(std::ostream &os) const {
+  os << start_->label << "--" << end_->label;
+}
+
+std::ostream &operator<<(std::ostream &os, const Edge &e) {
+  e.Dump(os);
+  return os;
+}
+
 }  // namespace graph

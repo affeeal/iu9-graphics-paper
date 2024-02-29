@@ -3,7 +3,9 @@
 #include <algorithm>
 #include <cmath>
 
+#include "edge.hpp"
 #include "graph.hpp"
+#include "utils.hpp"
 
 namespace graph {
 
@@ -34,6 +36,16 @@ std::function<bool(const std::pair<EdgeSptrConst, EdgeSptrConst>&)> RefComp(
     return &*p1.first == &*p2.first && &*p1.second == &*p2.second ||
            &*p1.first == &*p2.second && &*p1.second == &*p2.first;
   };
+}
+
+void PrintEdges(const std::vector<EdgeSptrConst>& es) {
+  std::cout << '[';
+
+  for (std::size_t i = 0, end = es.size() - 1; i < end; ++i) {
+    std::cout << *es[i] << ", ";
+  }
+
+  std::cout << *es.back() << "]\n";
 }
 
 TEST(Graph, 1Planar) {
@@ -260,6 +272,19 @@ TEST(Graph, CheckKLGrid) {
 
   const auto grid_3_3 = g.CheckGridFree(3, 3);
   ASSERT_EQ(grid_3_3.size(), 2);  // не баг, а фича
+}
+
+TEST(Graph, K10) {
+  const auto g = Graph::Graphviz(kDataPathPrefix + "k10.dot");
+  const auto& vs = g->get_vertices();
+  const auto& es = g->get_edges();
+
+  ASSERT_EQ(vs.size(), 10);
+  ASSERT_EQ(es.size(), 45); // 1 + 2 + ... + 9
+
+  const auto unsat_3p = g->CheckPlanar(1);
+  PrintEdges(unsat_3p);
+  ASSERT_TRUE(false);
 }
 
 }  // namespace
