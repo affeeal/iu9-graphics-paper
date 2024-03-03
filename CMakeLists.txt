@@ -15,4 +15,4 @@ enable_testing()
 add_subdirectory(lib)
 
 add_executable(${CMAKE_PROJECT_NAME} src/main.cpp)
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE bezier)
+target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC graph)

@@ -3,7 +3,9 @@
 #include <algorithm>
 #include <cmath>
 
+#include "edge.hpp"
 #include "graph.hpp"
+#include "utils.hpp"
 
 namespace graph {
 
@@ -36,13 +38,34 @@ std::function<bool(const std::pair<EdgeSptrConst, EdgeSptrConst>&)> RefComp(
   };
 }
 
+void PrintEdges(const std::vector<EdgeSptrConst>& es) {
+  std::cout << '[';
+
+  for (std::size_t i = 0, end = es.size() - 1; i < end; ++i) {
+    std::cout << *es[i] << ", ";
+  }
+
+  std::cout << *es.back() << "]\n";
+}
+
+void PrintEdges(const std::vector<std::vector<EdgeSptrConst>>& ess) {
+  std::cout << "]\n";
+
+  for (const auto& es : ess) {
+    std::cout << '\t';
+    PrintEdges(es);
+  }
+
+  std::cout << "[\n";
+}
+
 TEST(Graph, 1Planar) {
   Graph g(
       {{1, 3, "a"}, {1, 1, "b"}, {2, 1, "c"}, {2.5, 2, "d"}, {0.5, 2, "e"}});
   g.AddSLEdges({{0, 1}, {1, 2}, {2, 0}, {3, 4}, {4, 2}});
   const auto& es = g.get_edges();
 
-  const auto unsat_1p = g.CheckKPlanar(1);
+  const auto unsat_1p = g.CheckPlanar(1);
   ASSERT_EQ(unsat_1p.size(), 2);
 
   for (const auto& e : {es[0], es[3]}) {
@@ -50,7 +73,7 @@ TEST(Graph, 1Planar) {
               unsat_1p.end());
   }
 
-  const auto unsat_2p = g.CheckKPlanar(2);
+  const auto unsat_2p = g.CheckPlanar(2);
   ASSERT_EQ(unsat_2p.size(), 0);
 }
 
@@ -66,7 +89,7 @@ TEST(Graph, 4QuasiPlanar) {
   g.AddSLEdges({{0, 1}, {0, 2}, {1, 3}, {2, 3}, {4, 5}, {6, 7}});
   const auto& es = g.get_edges();
 
-  const auto unsat_3qp = g.CheckKQuasiPlanar(3);
+  const auto unsat_3qp = g.CheckQuasiPlanar(3);
   ASSERT_EQ(unsat_3qp.size(), 2);
 
   const std::vector<std::vector<EdgeSptrConst>> expected_unsat_3qp{
@@ -77,7 +100,7 @@ TEST(Graph, 4QuasiPlanar) {
               unsat_3qp.end());
   }
 
-  const auto unsat_4qp = g.CheckKQuasiPlanar(4);
+  const auto unsat_4qp = g.CheckQuasiPlanar(4);
   ASSERT_EQ(unsat_4qp.size(), 0);
 }
 
@@ -110,7 +133,7 @@ TEST(Grap, 5QuasiPlanar) {
                 {14, 15}});
   const auto& es = g.get_edges();
 
-  const auto unsat_3qp = g.CheckKQuasiPlanar(3);
+  const auto unsat_3qp = g.CheckQuasiPlanar(3);
   ASSERT_EQ(unsat_3qp.size(), 8);
 
   const std::vector<std::vector<EdgeSptrConst>> expected_unsat_3qp{
@@ -124,7 +147,7 @@ TEST(Grap, 5QuasiPlanar) {
               unsat_3qp.end());
   }
 
-  const auto unsat_4qp = g.CheckKQuasiPlanar(4);
+  const auto unsat_4qp = g.CheckQuasiPlanar(4);
   ASSERT_EQ(unsat_4qp.size(), 2);
 
   const std::vector<std::vector<EdgeSptrConst>> expected_unsat_4qp{
@@ -137,11 +160,11 @@ TEST(Grap, 5QuasiPlanar) {
               unsat_4qp.end());
   }
 
-  const auto unsat_5qp = g.CheckKQuasiPlanar(5);
+  const auto unsat_5qp = g.CheckQuasiPlanar(5);
   ASSERT_EQ(unsat_5qp.size(), 0);
 }
 
-TEST(Graph, CheckKSkewness) {
+TEST(Graph, CheckSkewness) {
   Graph g({{1, 1, "0"},
            {3, 2, "1"},
            {4, 2, "2"},
@@ -152,25 +175,26 @@ TEST(Graph, CheckKSkewness) {
            {3, 5, "7"}});
   g.AddSLEdges({{0, 4}, {1, 3}, {2, 6}, {5, 7}});
 
-  auto unsat_1s = g.CheckKSkewness(1);
+  auto unsat_1s = g.CheckSkewness(1);
   ASSERT_EQ(unsat_1s.size(), 0);
 
   g.AddVertices({{3, 6, "8"}, {5, 3, "9"}});
   g.AddSLEdge(8, 9);
   const auto& es = g.get_edges();
 
-  unsat_1s = g.CheckKSkewness(1);
-  ASSERT_EQ(unsat_1s.size(), 2);
+  unsat_1s = g.CheckSkewness(1);
+  PrintEdges(unsat_1s);
+  ASSERT_EQ(unsat_1s.size(), 1);
 
-  const std::vector<std::vector<EdgeSptrConst>> expected_unsat_1s{{es[2]},
-                                                                  {es[4]}};
+  const std::vector<std::vector<EdgeSptrConst>> expected_unsat_1s{
+      {es[2], es[4]}};
 
   for (const auto& es : expected_unsat_1s) {
     EXPECT_NE(std::find_if(unsat_1s.begin(), unsat_1s.end(), RefComp(es)),
               unsat_1s.end());
   }
 
-  const auto unsat_2s = g.CheckKSkewness(2);
+  const auto unsat_2s = g.CheckSkewness(2);
   ASSERT_EQ(unsat_2s.size(), 0);
 }
 
@@ -256,10 +280,30 @@ TEST(Graph, CheckKLGrid) {
 
   const auto grids_2_3 = g.CheckGridFree(2, 3);
   ASSERT_EQ(grids_2_3.size(), 6);
-  // TODO: check the content
 
   const auto grid_3_3 = g.CheckGridFree(3, 3);
-  ASSERT_EQ(grid_3_3.size(), 2);  // не баг, а фича
+  ASSERT_EQ(grid_3_3.size(), 2);
+}
+
+TEST(Graph, K10) {
+  const auto g = Graph::Graphviz(kDataPathPrefix + "k10.dot");
+  const auto& vs = g->get_vertices();
+  const auto& es = g->get_edges();
+
+  ASSERT_EQ(vs.size(), 10);
+  ASSERT_EQ(es.size(), 45);  // 1 + 2 + ... + 9
+
+  const auto unsat_6p = g->CheckPlanar(6);
+  // TODO: check
+
+  const auto unsat_3qp = g->CheckQuasiPlanar(3);
+  // TODO: check
+
+  const auto unsat_20s = g->CheckSkewness(20);
+  // TODO: check
+
+  const auto unsat_grid = g->CheckGridFree(3, 3);
+  // TODO: check
 }
 
 }  // namespace

@@ -37,13 +37,16 @@ class Graph final {
 
   bool IsStraightLine() const;
 
-  std::vector<EdgeSptrConst> CheckKPlanar(const std::size_t k) const;
+  std::vector<EdgeSptrConst> CheckPlanar(const std::size_t k) const;
 
-  std::vector<std::vector<EdgeSptrConst>> CheckKQuasiPlanar(
+  std::vector<std::vector<EdgeSptrConst>> CheckQuasiPlanar(
       const std::size_t k) const;
 
-  std::vector<std::vector<EdgeSptrConst>> CheckKSkewness(
+  std::vector<std::vector<EdgeSptrConst>> CheckSkewness(
       const std::size_t k) const;
+
+  std::vector<KLGrid> CheckGridFree(const std::size_t k,
+                                    const std::size_t l) const;
 
   std::vector<std::pair<EdgeSptrConst, EdgeSptrConst>> CheckRAC() const;
 
@@ -52,9 +55,6 @@ class Graph final {
 
   std::vector<std::pair<EdgeSptrConst, EdgeSptrConst>> CheckACL(
       const double alpha) const;
-
-  std::vector<KLGrid> CheckGridFree(const std::size_t k,
-                                    const std::size_t l) const;
 
  private:
   using ACPredicat = std::function<bool(const double angle)>;

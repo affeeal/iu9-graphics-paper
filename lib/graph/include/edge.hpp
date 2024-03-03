@@ -21,6 +21,7 @@ class Edge final {
 
   bool IsIntersect(const Edge &e) const;
   bool IsStraightLine() const;
+  void Dump(std::ostream &os) const;
 
  private:
   void CheckCurvesSizeInvariant() const;
@@ -29,5 +30,7 @@ class Edge final {
   VertexSptrConst end_;
   std::vector<bezier::CurveUptrConst> cs_;
 };
+
+std::ostream &operator<<(std::ostream &os, const Edge &e);
 
 }  // namespace graph
