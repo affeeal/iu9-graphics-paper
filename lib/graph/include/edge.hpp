@@ -21,7 +21,7 @@ class Edge final {
 
   bool IsIntersect(const Edge &e) const;
   bool IsStraightLine() const;
-  void Dump(std::ostream& os) const;
+  void Dump(std::ostream &os) const;
 
  private:
   void CheckCurvesSizeInvariant() const;

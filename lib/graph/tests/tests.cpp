@@ -48,6 +48,17 @@ void PrintEdges(const std::vector<EdgeSptrConst>& es) {
   std::cout << *es.back() << "]\n";
 }
 
+void PrintEdges(const std::vector<std::vector<EdgeSptrConst>>& ess) {
+  std::cout << "]\n";
+
+  for (const auto& es : ess) {
+    std::cout << '\t';
+    PrintEdges(es);
+  }
+
+  std::cout << "[\n";
+}
+
 TEST(Graph, 1Planar) {
   Graph g(
       {{1, 3, "a"}, {1, 1, "b"}, {2, 1, "c"}, {2.5, 2, "d"}, {0.5, 2, "e"}});
@@ -153,7 +164,7 @@ TEST(Grap, 5QuasiPlanar) {
   ASSERT_EQ(unsat_5qp.size(), 0);
 }
 
-TEST(Graph, CheckKSkewness) {
+TEST(Graph, CheckSkewness) {
   Graph g({{1, 1, "0"},
            {3, 2, "1"},
            {4, 2, "2"},
@@ -172,10 +183,11 @@ TEST(Graph, CheckKSkewness) {
   const auto& es = g.get_edges();
 
   unsat_1s = g.CheckSkewness(1);
-  ASSERT_EQ(unsat_1s.size(), 2);
+  PrintEdges(unsat_1s);
+  ASSERT_EQ(unsat_1s.size(), 1);
 
-  const std::vector<std::vector<EdgeSptrConst>> expected_unsat_1s{{es[2]},
-                                                                  {es[4]}};
+  const std::vector<std::vector<EdgeSptrConst>> expected_unsat_1s{
+      {es[2], es[4]}};
 
   for (const auto& es : expected_unsat_1s) {
     EXPECT_NE(std::find_if(unsat_1s.begin(), unsat_1s.end(), RefComp(es)),
@@ -268,10 +280,9 @@ TEST(Graph, CheckKLGrid) {
 
   const auto grids_2_3 = g.CheckGridFree(2, 3);
   ASSERT_EQ(grids_2_3.size(), 6);
-  // TODO: check the content
 
   const auto grid_3_3 = g.CheckGridFree(3, 3);
-  ASSERT_EQ(grid_3_3.size(), 2);  // не баг, а фича
+  ASSERT_EQ(grid_3_3.size(), 2);
 }
 
 TEST(Graph, K10) {
@@ -280,11 +291,19 @@ TEST(Graph, K10) {
   const auto& es = g->get_edges();
 
   ASSERT_EQ(vs.size(), 10);
-  ASSERT_EQ(es.size(), 45); // 1 + 2 + ... + 9
+  ASSERT_EQ(es.size(), 45);  // 1 + 2 + ... + 9
 
-  const auto unsat_3p = g->CheckPlanar(1);
-  PrintEdges(unsat_3p);
-  ASSERT_TRUE(false);
+  const auto unsat_6p = g->CheckPlanar(6);
+  // TODO: check
+
+  const auto unsat_3qp = g->CheckQuasiPlanar(3);
+  // TODO: check
+
+  const auto unsat_20s = g->CheckSkewness(20);
+  // TODO: check
+
+  const auto unsat_grid = g->CheckGridFree(3, 3);
+  // TODO: check
 }
 
 }  // namespace

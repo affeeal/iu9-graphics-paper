@@ -151,9 +151,7 @@ void HandleDrawCommand(std::string &&command, std::vector<EdgeSptrConst> &es,
   const auto &end = labels_to_vertices.at(nodes.back());
 
   const auto points = NodesToPoints(std::move(nodes), labels_to_vertices);
-  std::cerr << "Points' size: " << points.size() << '\n';
   auto curves = CurvesByPoints(points);
-  std::cerr << "Curves' size: " << curves.size() << '\n';
 
   es.push_back(std::make_shared<const Edge>(start, end, std::move(curves)));
 }
@@ -174,7 +172,8 @@ std::unordered_set<std::size_t> kQuasiPlanarCandidates(
     }
   }
 
-  for (auto candidate_deleted = false; candidate_deleted; candidate_deleted = false) {
+  for (auto candidate_deleted = false; candidate_deleted;
+       candidate_deleted = false) {
     if (candidates.size() < k) {
       return {};
     }
@@ -287,7 +286,6 @@ GraphUptr Graph::Graphviz(const std::string &path) {
     if (line.find(kNodeCommandStart) != std::string::npos) {
       HandleNodeCommand(std::move(line), labels_to_vertices);
     } else if (line.find(kDrawCommandStart) != std::string::npos) {
-      std::cerr << line << '\n';
       HandleDrawCommand(std::move(line), es, labels_to_vertices);
     } else if (line.find(kTikzpictureEnd) != std::string::npos) {
       break;
@@ -345,17 +343,6 @@ std::vector<EdgeSptrConst> Graph::CheckPlanar(const std::size_t k) const {
   }
 
   const auto intersections = CalculateIntersections();
-
-  for (std::size_t i = 0; i < es_.size(); ++i) {
-    std::cerr << *es_[i] << ": ";
-
-    for (const auto j : intersections[i]) {
-      std::cerr << *es_[j] << ", ";
-    }
-
-    std::cerr << '\n';
-  }
-
   std::vector<EdgeSptrConst> unsatisfying_edges;
 
   for (std::size_t i = 0; i < es_.size(); i++) {
@@ -450,7 +437,7 @@ std::vector<std::vector<EdgeSptrConst>> Graph::CheckSkewness(
   }
 
   const auto combinations =
-      utils::Combinations(utils::AsVector(edges_to_delete), k);
+      utils::Combinations(utils::AsVector(edges_to_delete), k + 1);
 
   std::vector<std::vector<EdgeSptrConst>> result;
   result.reserve(combinations.size());
@@ -630,9 +617,7 @@ std::vector<Set> Graph::CalculateIntersections(
 
   for (std::size_t i = 0, end = es_.size() - 1; i < end; ++i) {
     for (std::size_t j = i + 1; j < es_.size(); ++j) {
-        std::cerr << "Intersecting " << *es_[i] << ", " << *es_[j] << '\n';
       if (es_[i]->IsIntersect(*es_[j])) {
-        std::cerr << "Found intersection!" << '\n';
         intersections[i].insert(j);
         if (mode == WriteIntersections::kSymmetrically) {
           intersections[j].insert(i);
